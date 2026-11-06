@@ -1,6 +1,6 @@
-name = "PrismTemplateContract"
+name = "PrismLegalChess"
 version = "0.1.0"
-defaultTargets = ["PrismTemplateContract"]
+defaultTargets = ["PrismLegalChess"]
 
 [[lean_lib]]
-name = "PrismTemplateContract"
+name = "PrismLegalChess"

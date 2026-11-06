@@ -1,8 +1,7 @@
 # Template repository verification
 
 This repository's `just vv` instantiates the universal verification policy in
-`VERIFICATION.md` for the template itself, which is a Prism application: the
-template contract checker in `app/`.
+`VERIFICATION.md` for a Prism application: the chess opponent in `app/`.
 
 | `just` recipe | Enforces | ID classes |
 | --- | --- | --- |
@@ -12,13 +11,13 @@ template contract checker in `app/`.
 | `just lint` | Clippy at `-D warnings`, every target, every optional feature | --- |
 | `just test` | the workspace suite, including the R3 meta-gate | `CM-02`, `CM-03` |
 | `just deny` | R6 over the dependency graph | --- |
-| `just app` | the Prism application: LexLean format and lock, then `prismpm verify`, which builds the holo and checks it | `TC-01` |
+| `just app` | the Prism application: LexLean format and lock, then `prismpm verify`, which builds the holo and checks it | `LC-01`, `LC-02`, `LC-03` |
 
 Each check runs once per `just vv`. `just bdd` runs only the meta-gate while a
 scenario is being written; `just test` already includes it.
 
-The register holds one claim, `TC-01`, so the meta-gate checks a real row, a
-real scenario and a real test. It becomes an error as soon as an ID, scenario,
+The register holds three claims, `LC-01` to `LC-03`, so the meta-gate checks
+real rows, real scenarios and real tests. It becomes an error as soon as an ID, scenario,
 or test is added without the other two.
 
 ## Planted defects
@@ -28,7 +27,10 @@ or test is added without the other two.
 | `check-model` | `CONFORMANCE.md` disagrees with the register | rejected |
 | `audit-deferral` | a deferral marker in a crate and in the gate's own source | both rejected |
 | honesty meta-gate | an ID with no test | rejected |
-| `contract_tc_01` | `Conformant` drops the `bootstrap` conjunct, or `dispatch` answers on `true` instead of `conformant` | both rejected |
+| `chess_lc_01` | `reply` gates the candidate on `Legal` instead of its own verdict | rejected |
+| `chess_lc_02` | `userTurn` counts the replies of `playMove pos move` instead of the gated position | rejected |
+| Lean kernel (`lexlean verify`) | `gate` plays the move on `Illegal` too | rejected |
+| acceptance vectors (`prismpm verify`) | `pawnOk` loses en passant | rejected |
 | `prismpm verify` | an acceptance vector set without the exact guest-allocation boundary | rejected (PP2009) |
 | `audit-bootstrap` | a floating/copied action, mutable SDK tag, changed universal file, narrowed boundary, shallow/credential-retaining checkout, copied project renderer, omitted standards lock, acceptance bypass, deploy-job signing privilege, incomplete release lifecycle, or a bootstrap that drops a native architecture from main or tags, cancels or replaces a main run, or skips runs by path, condition or matrix exclusion | all rejected |
 
@@ -215,45 +217,62 @@ produced files that passed `cargo fmt --check` and all-feature Clippy, and
 passed with the pinned Rust 1.97.1 on `x86_64-unknown-linux-gnu`, locked,
 outside the SDK image; the SDK checks run in the pull request's bootstrap job.
 
-## The template contract checker
+## The chess application
 
-`app/` is a Prism text application modeled in `app/src/Contract.lex.tex`. Its
-request is 384 bytes: for each universal policy file, in `template.lock`
-`policy_files` order, the locked SHA-256 then the observed SHA-256. It answers
-`conformant`, or `drift:` followed by each drifted path after a space, or
-`invalid request` for any
-other length. Lean proves, with only `propext`, that the executable verdict is
-both sound and complete for the specification:
+`app/` is a Prism text application modeled in `app/src/Chess.lex.tex`. A
+request is a 70-character position, optionally followed by a space and a move,
+or by `?`. The app answers with the position after its reply, its reply and the
+status of that position; with `illegal move`; with the perft counts to depth
+three; or with `invalid request`.
 
-- `conformant_decides`: `conformant observation = true ↔ Conformant observation`.
+Two gates decide everything the app plays. `verdict pos move` is `Legal`
+exactly when `isLegalMove pos move`, the piece's rules of movement and the rule
+that the mover's king is not left attacked. `gate` turns a verdict into a
+reply and `admitGate` into an accepted position. Lean proves, by cases on the
+verdict and with no axiom, that a reply is played and a move accepted only on
+`Legal` (`gate_plays_only_legal`, `gate_accepts_only_legal`), and by applying
+them that the engine's reply and the visitor's move go through those gates
+(`reply_is_legal`, `admit_is_legal`). `chess_lc_01` and `chess_lc_02` pin the
+statements and that `dispatch` reaches play only through `reply` and
+`admitMove`.
 
-The proof is `simplify` over the definitions and Lean's `Bool.and_eq_true` and
-`Nat.beq_eq`, not `linear_arithmetic`. A `linear_arithmetic` proof makes the
-generated module import `LexLeanRuntime.Laws`, and `prismpm build` then
-compiles that module to C, which did not finish within the build's ten-minute
-limit in CI or in 25 minutes locally (without C generation it takes four
-seconds). The first CI run of this app failed exactly there, with
-`PP5007: application-lean timed out`. The second failed in code generation
-(`PP4102`), because the drift report was a `List String` built as an
-intermediate value. It is now `Bytes` appended straight into the response.
+Whether `isLegalMove` is the rules of chess is measured, not proved (`LC-03`).
+The acceptance vectors carry the Chess Programming Wiki's perft counts for five
+reference positions at depths one to three; `chess_lc_03` rebuilds each request
+from its FEN and requires those exact counts in the model.
 
-`Conformant` is the conjunction of six digest equalities, one per universal
-policy path. A digest is four big-endian 64-bit words, because generated code
-represents a `Nat` as a checked `u64`, and `SameDigest` requires all four words
-to be equal, so two digests are the same exactly when their 32 bytes are. `contract_tc_01` reads the model as text and requires the theorem
-statement, its axiom list, one `Conformant` conjunct for each path in
-`template-contract.json` other than `template.lock` (which cannot pin its own
-digest), each path in the drift report, and a `dispatch` decided by
-`conformant`. The nine acceptance vectors (conformant, four drift cases, 383,
-385, 0 and 512 bytes) are executed against the compiled guest by the build
-that `prismpm verify` runs before it checks the resulting holo, so the proof, the code
-and the observed behaviour ship as one artifact.
+The board is four natural numbers of sixteen four-bit squares and moves are
+judged by a predicate, never collected into lists. The first build kept move
+lists as `List` and failed in code generation (a list returned as an
+intermediate value); the second kept them as `Bytes` and built, but every move
+request trapped: the guest's allocator never frees, its memory is 32 pages,
+and the generated code copies a byte string on every call. The present model
+allocates only to read the request and write the response.
 
-Locally, with LexLean 0.3.0 (the SDK's compiler), `lexlean check` and
-`lexlean verify` passed, verifying three modules; both planted defects in the
-table above made `contract_tc_01` fail with a message naming the defect. The
-holo build and verify run in the pull request's bootstrap job inside the
-locked SDK. `just app` runs only `prismpm verify`: it begins with the same
-build `prismpm build` performs, so running both built the holo twice. In the
-first green run, `prismpm build` took 82 seconds and `prismpm verify` 6
-minutes 14 seconds.
+The engine searches two plies over material and placement, and its reply is
+the first best move in square order, so every answer is deterministic and the
+play vectors are exact.
+
+Locally, in the SDK image `prismpm.lock` pins (LexLean 0.3.0, PrismPM 0.3.0,
+UID 1000, amd64 under WSL), `just vv` passed with all 24 acceptance vectors
+replayed in the compiled guest and `prismpm verify` printing build attestation
+`2659b771b657bb0d31a743fb0e41a460ff1b0bb250dbb0a50b0ae5a81d382d2c`. The UOR
+MCP server's newer LexLean verified the same source, attestation
+`f4a6021de2acd2c6e29923d4e2803ee7084f05ef438f4d5104c90b6500c3bc09`. The
+planted defects in the table above were each run against that tree and
+restored:
+
+- `reply` on `(ctor Verdict.Legal)`: `chess_lc_01` failed, "reply must contain
+  `body: (gate (candidate pos) (verdict pos (candidate pos)))`".
+- `userTurn` counting `(playMove pos move)`: `chess_lc_02` failed, "userTurn
+  must not play a move around the gate".
+- `gate` playing on `Illegal`: `lexlean verify` failed with `LLV7002`, "Tactic
+  `rfl` failed" in `case Illegal` of `gate_plays_only_legal`.
+- `pawnOk` without en passant: the built holo replayed 20 of 24 vectors;
+  position 3 answered `14 191 2810` for `14 191 2812`, position 4 `6 264 9463`
+  for `6 264 9467`, and the en passant capture `d4e3` answered `illegal move`.
+
+The template's scaffold tests copied this repository's authorities into an
+empty scratch register, so the first authority to name an ID made them fail
+(`CPW-PERFT: realized_by names unknown ID LC-03`); the scratch copy now clears
+`realized_by`, and all 18 `xtask` tests pass.

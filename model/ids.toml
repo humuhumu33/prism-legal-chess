@@ -15,14 +15,26 @@
 # state: a capability that is not built does not get a row, and every row in this
 # file is built.
 #
-# The first row is the template's own Prism application in `app/` (TC-01).
+# The rows are the chess application in `app/` (LC-01 .. LC-03).
 # A capability starts with a row here; `just new-capability` writes the row,
 # its scenario and its failing test in the order `AGENTS.md` sets out.
 
 spec = "template/1"
 
 [[id]]
-id = "TC-01"
+id = "LC-01"
 level = "build"
-suite = "contract"
-statement = "The checker answers conformant exactly when every universal policy file's observed digest equals its locked digest"
+suite = "chess"
+statement = "The app plays a reply only when the legality gate accepts that move"
+
+[[id]]
+id = "LC-02"
+level = "build"
+suite = "chess"
+statement = "The app accepts a move only when the legality gate accepts it"
+
+[[id]]
+id = "LC-03"
+level = "build"
+suite = "chess"
+statement = "Legal move generation reproduces the published perft counts of five reference positions to depth three"

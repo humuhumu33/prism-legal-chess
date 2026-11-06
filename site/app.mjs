@@ -130,6 +130,7 @@ async function main() {
   } catch (error) {
     chip($("verified"), `failed to load: ${describe(error)}`, "bad");
     chip($("replayed"), "no app", "bad");
+    chip($("game-status"), "no app", "bad");
     return;
   }
 
@@ -139,6 +140,14 @@ async function main() {
   $("limits").textContent = app.limits
     ? `request ${app.limits.request} bytes, response ${app.limits.response} bytes, guest ${app.limits.guestAllocation} bytes`
     : "unknown";
+
+  // The board plays through the same verified instance the identity shows.
+  if (identities.verified) {
+    const { startBoard } = await import("./board.mjs");
+    startBoard(app, $);
+  } else {
+    chip($("game-status"), "not verified: the board stays off", "bad");
+  }
 
   $("copy").addEventListener("click", async () => {
     try {

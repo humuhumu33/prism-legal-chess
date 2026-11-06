@@ -239,9 +239,26 @@ mod tests {
         for dir in ["model", "features/suites", "crates/conformance/tests"] {
             std::fs::create_dir_all(root.join(dir)).unwrap();
         }
-        for file in ["authorities.toml", "ledger.toml"] {
-            std::fs::copy(real.join("model").join(file), root.join("model").join(file)).unwrap();
-        }
+        std::fs::copy(
+            real.join("model/ledger.toml"),
+            root.join("model/ledger.toml"),
+        )
+        .unwrap();
+        // The authorities, without the IDs they are evidence for: those IDs
+        // are rows of this repository's register, which the scratch one lacks.
+        let authorities = std::fs::read_to_string(real.join("model/authorities.toml")).unwrap();
+        let unbound: String = authorities
+            .lines()
+            .map(|line| {
+                if line.starts_with("realized_by") {
+                    "realized_by = []"
+                } else {
+                    line
+                }
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+        std::fs::write(root.join("model/authorities.toml"), unbound + "\n").unwrap();
         // An empty register, as a freshly instantiated repository has; this
         // repository's own rows are not the scratch repository's.
         std::fs::write(

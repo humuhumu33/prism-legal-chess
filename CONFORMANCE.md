@@ -18,11 +18,13 @@ The three honesty levels (R2):
 `cargo xtask audit-limits` fails if any code path returns an error the
 model does not sanction.
 
-## contract
+## chess
 
 | ID | Level | Statement |
 | --- | --- | --- |
-| `TC-01` | `build` | The checker answers conformant exactly when every universal policy file's observed digest equals its locked digest |
+| `LC-01` | `build` | The app plays a reply only when the legality gate accepts that move |
+| `LC-02` | `build` | The app accepts a move only when the legality gate accepts it |
+| `LC-03` | `build` | Legal move generation reproduces the published perft counts of five reference positions to depth three |
 
 ## Cited authorities
 
@@ -30,6 +32,7 @@ Never re-derived, vendored, or gated on.
 
 | Authority | Citation | Evidence here |
 | --- | --- | --- |
+| `CPW-PERFT` | https://www.chessprogramming.org/Perft_Results | `LC-03` |
 
 ## Claims that are not conformance IDs
 

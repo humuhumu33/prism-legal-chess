@@ -8,10 +8,14 @@
 # `realized_by` lists the conformance IDs that are *evidence* this repository
 # realizes the cited fact. Evidence is not proof, and the meta-gate fails the
 # build if any document blurs the two registers.
-#
-# Empty. The first authority this repository cites goes here, before any claim
-# is allowed to say `some-true`.
 
 spec = "template/1"
 
-authority = []
+[[authority]]
+id = "CPW-PERFT"
+name = "Chess Programming Wiki, Perft Results"
+citation = "https://www.chessprogramming.org/Perft_Results"
+checksum = "none"
+checksum_reason = "A wiki page, not a committed artifact. The five positions and their depth one to three counts are restated in crates/conformance/tests/chess.rs, which builds the requests from the FEN strings itself."
+statement = "The number of leaf positions reached by legal play to depths one, two and three from the initial position (20, 400, 8902), Kiwipete (48, 2039, 97862), position 3 (14, 191, 2812), position 4 (6, 264, 9467) and position 5 (44, 1486, 62379)."
+realized_by = ["LC-03"]

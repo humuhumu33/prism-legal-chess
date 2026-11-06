@@ -1,0 +1,957 @@
+\begin{lexlean}{Chess}
+\useglossary{lexlean.std.bool@1.2.0}
+\useglossary{lexlean.std.nat@1.2.0}
+\useglossary{prism.arch@1.0.0}
+\importmodule{Foundation.Bytes}
+\importmodule{Foundation.View.Text.V1.Model}
+\title{Text application model}
+\begin{semanticmodule}
+structure{
+  name: Move,
+  type_parameters: [],
+  parameters: [],
+  fields: [{name: origin, type: Nat}, {name: target, type: Nat}, {name: promotion, type: Nat}]
+}
+
+structure{
+  name: Position,
+  type_parameters: [],
+  parameters: [],
+  fields: [
+    {name: w0, type: Nat},
+    {name: w1, type: Nat},
+    {name: w2, type: Nat},
+    {name: w3, type: Nat},
+    {name: white, type: Bool},
+    {name: rights, type: Nat},
+    {name: passant, type: Nat}
+  ]
+}
+
+structure{
+  name: Choice,
+  type_parameters: [],
+  parameters: [],
+  fields: [{name: chosen, type: Move}, {name: worth, type: Nat}]
+}
+
+inductive{
+  name: Verdict,
+  type_parameters: [],
+  parameters: [],
+  constructors: [{name: Legal, fields: []}, {name: Illegal, fields: []}]
+}
+
+inductive{
+  name: Reply,
+  type_parameters: [],
+  parameters: [],
+  constructors: [{name: Played, fields: [Move]}, {name: Passed, fields: []}]
+}
+
+inductive{
+  name: Outcome,
+  type_parameters: [],
+  parameters: [],
+  constructors: [{name: Accepted, fields: [Position]}, {name: Rejected, fields: []}]
+}
+
+inductive{
+  name: Decoded,
+  type_parameters: [],
+  parameters: [],
+  constructors: [{name: Valid, fields: [Position]}, {name: Invalid, fields: []}]
+}
+
+inductive{
+  name: MoveRead,
+  type_parameters: [],
+  parameters: [],
+  constructors: [{name: Read, fields: [Move]}, {name: Unread, fields: []}]
+}
+
+definition{
+  name: pow16,
+  parameters: [k : Nat],
+  result: Nat,
+  body: (if (k <=? 7) then (if (k <=? 3) then (if (k <=? 1) then (if (k <=? 0) then 1 else 16) else (if (k <=? 2) then 256 else 4096)) else (if (k <=? 5) then (if (k <=? 4) then 65536 else 1048576) else (if (k <=? 6) then 16777216 else 268435456))) else (if (k <=? 11) then (if (k <=? 9) then (if (k <=? 8) then 4294967296 else 68719476736) else (if (k <=? 10) then 1099511627776 else 17592186044416)) else (if (k <=? 13) then (if (k <=? 12) then 281474976710656 else 4503599627370496) else (if (k <=? 14) then 72057594037927936 else 1152921504606846976))))
+}
+
+definition{
+  name: nibble,
+  parameters: [word : Nat, k : Nat],
+  result: Nat,
+  body: (prim remainder (prim quotient word (pow16 k) 0 : Nat) 16 0 : Nat)
+}
+
+definition{
+  name: wordOf,
+  parameters: [pos : Position, index : Nat],
+  result: Nat,
+  body: (if (index =? 0) then (project pos w0) else (if (index =? 1) then (project pos w1) else (if (index =? 2) then (project pos w2) else (project pos w3))))
+}
+
+definition{
+  name: pieceAt,
+  parameters: [pos : Position, square : Nat],
+  result: Nat,
+  body: (if (square <? 64) then (nibble (wordOf pos (prim quotient square 16 0 : Nat)) (prim remainder square 16 0 : Nat)) else 0)
+}
+
+definition{
+  name: replaced,
+  parameters: [word : Nat, k : Nat, old : Nat, code : Nat],
+  result: Nat,
+  body: ((prim subtract word (prim multiply old (pow16 k) : Nat) : Nat) + (prim multiply code (pow16 k) : Nat))
+}
+
+definition{
+  name: withPiece,
+  parameters: [pos : Position, square : Nat, code : Nat],
+  result: Position,
+  body: (let index : Nat := (prim quotient square 16 0 : Nat); (let k : Nat := (prim remainder square 16 0 : Nat); (let old : Nat := (pieceAt pos square); (record Position {w0 := (if (index =? 0) then (replaced (project pos w0) k old code) else (project pos w0)), w1 := (if (index =? 1) then (replaced (project pos w1) k old code) else (project pos w1)), w2 := (if (index =? 2) then (replaced (project pos w2) k old code) else (project pos w2)), w3 := (if (index =? 3) then (replaced (project pos w3) k old code) else (project pos w3)), white := (project pos white), rights := (project pos rights), passant := (project pos passant)}))))
+}
+
+definition{
+  name: fileOf,
+  parameters: [square : Nat],
+  result: Nat,
+  body: (prim remainder square 8 0 : Nat)
+}
+
+definition{
+  name: rankOf,
+  parameters: [square : Nat],
+  result: Nat,
+  body: (prim quotient square 8 0 : Nat)
+}
+
+definition{
+  name: distance,
+  parameters: [left : Nat, right : Nat],
+  result: Nat,
+  body: (if (left <? right) then (prim subtract right left : Nat) else (prim subtract left right : Nat))
+}
+
+definition{
+  name: stepTo,
+  parameters: [square : Nat, dfile : Nat, drank : Nat],
+  result: Nat,
+  body: (let column : Nat := ((fileOf square) + dfile); (let row : Nat := ((rankOf square) + drank); (if ((square <? 64) && ((7 <? column) && ((column <? 16) && ((7 <? row) && (row <? 16))))) then ((prim multiply (prim subtract row 8 : Nat) 8 : Nat) + (prim subtract column 8 : Nat)) else 64)))
+}
+
+definition{
+  name: mkMove,
+  parameters: [start : Nat, finish : Nat, piece : Nat],
+  result: Move,
+  body: (record Move {origin := start, target := finish, promotion := piece})
+}
+
+definition{
+  name: isWhitePiece,
+  parameters: [code : Nat],
+  result: Bool,
+  body: ((1 <=? code) && (code <=? 6))
+}
+
+definition{
+  name: isBlackPiece,
+  parameters: [code : Nat],
+  result: Bool,
+  body: ((9 <=? code) && (code <=? 14))
+}
+
+definition{
+  name: isFriend,
+  parameters: [mover : Bool, code : Nat],
+  result: Bool,
+  body: (if mover then (isWhitePiece code) else (isBlackPiece code))
+}
+
+definition{
+  name: isFoe,
+  parameters: [mover : Bool, code : Nat],
+  result: Bool,
+  body: (if mover then (isBlackPiece code) else (isWhitePiece code))
+}
+
+definition{
+  name: kindOf,
+  parameters: [code : Nat],
+  result: Nat,
+  body: (prim remainder code 8 0 : Nat)
+}
+
+definition{
+  name: tint,
+  parameters: [mover : Bool, kind : Nat],
+  result: Nat,
+  body: (if mover then kind else (kind + 8))
+}
+
+definition{
+  name: isEmpty,
+  parameters: [pos : Position, square : Nat],
+  result: Bool,
+  body: ((square <? 64) && ((pieceAt pos square) =? 0))
+}
+
+definition{name: knightSteps, parameters: [], result: Nat, body: 12075969637363915433}
+
+definition{name: kingSteps, parameters: [], result: Nat, body: 10995405962440444313}
+
+definition{name: rookLines, parameters: [], result: Nat, body: 2272823704}
+
+definition{name: bishopLines, parameters: [], result: Nat, body: 2541189529}
+
+definition{
+  name: pawnSources,
+  parameters: [attacker : Bool],
+  result: Nat,
+  body: (if attacker then 31095 else 39319)
+}
+
+definition{
+  name: leaperHits,
+  parameters: [pos : Position, square : Nat, steps : Nat, index : Nat, fuel : Nat, code : Nat],
+  result: Bool,
+  body: (match fuel
+    | Nat.zero => false
+    | Nat.succ spare => (((pieceAt pos (stepTo square (nibble steps (prim multiply index 2 : Nat)) (nibble steps ((prim multiply index 2 : Nat) + 1)))) =? code) || (leaperHits pos square steps (index + 1) spare code))),
+  recursive_argument: fuel
+}
+
+definition{
+  name: rayHits,
+  parameters: [
+    pos : Position,
+    cursor : Nat,
+    dfile : Nat,
+    drank : Nat,
+    fuel : Nat,
+    alpha : Nat,
+    beta : Nat
+  ],
+  result: Bool,
+  body: (match fuel
+    | Nat.zero => false
+    | Nat.succ spare => (let dest : Nat := (stepTo cursor dfile drank); (if (64 <=? dest) then false else (let code : Nat := (pieceAt pos dest); (if (code =? 0) then (rayHits pos dest dfile drank spare alpha beta) else ((code =? alpha) || (code =? beta))))))),
+  recursive_argument: fuel
+}
+
+definition{
+  name: lineHits,
+  parameters: [
+    pos : Position,
+    square : Nat,
+    lines : Nat,
+    index : Nat,
+    fuel : Nat,
+    alpha : Nat,
+    beta : Nat
+  ],
+  result: Bool,
+  body: (match fuel
+    | Nat.zero => false
+    | Nat.succ spare => ((rayHits pos square (nibble lines (prim multiply index 2 : Nat)) (nibble lines ((prim multiply index 2 : Nat) + 1)) 7 alpha beta) || (lineHits pos square lines (index + 1) spare alpha beta))),
+  recursive_argument: fuel
+}
+
+definition{
+  name: attackedBy,
+  parameters: [pos : Position, square : Nat, attacker : Bool],
+  result: Bool,
+  body: ((leaperHits pos square (knightSteps) 0 8 (tint attacker 2)) || ((leaperHits pos square (kingSteps) 0 8 (tint attacker 6)) || ((leaperHits pos square (pawnSources attacker) 0 2 (tint attacker 1)) || ((lineHits pos square (rookLines) 0 4 (tint attacker 4) (tint attacker 5)) || (lineHits pos square (bishopLines) 0 4 (tint attacker 3) (tint attacker 5))))))
+}
+
+definition{
+  name: findCode,
+  parameters: [pos : Position, code : Nat, square : Nat, fuel : Nat],
+  result: Nat,
+  body: (match fuel
+    | Nat.zero => 64
+    | Nat.succ spare => (if ((pieceAt pos square) =? code) then square else (findCode pos code (square + 1) spare))),
+  recursive_argument: fuel
+}
+
+definition{
+  name: kingSquare,
+  parameters: [pos : Position, mover : Bool],
+  result: Nat,
+  body: (findCode pos (tint mover 6) 0 64)
+}
+
+definition{
+  name: inCheck,
+  parameters: [pos : Position],
+  result: Bool,
+  body: (attackedBy pos (kingSquare pos (project pos white)) (not (project pos white)))
+}
+
+definition{
+  name: pathClear,
+  parameters: [pos : Position, cursor : Nat, finish : Nat, dfile : Nat, drank : Nat, fuel : Nat],
+  result: Bool,
+  body: (match fuel
+    | Nat.zero => false
+    | Nat.succ spare => (let next : Nat := (stepTo cursor dfile drank); (if (next =? finish) then true else ((isEmpty pos next) && (pathClear pos next finish dfile drank spare))))),
+  recursive_argument: fuel
+}
+
+definition{
+  name: heading,
+  parameters: [start : Nat, finish : Nat],
+  result: Nat,
+  body: (if (start <? finish) then 9 else (if (finish <? start) then 7 else 8))
+}
+
+definition{
+  name: slideClear,
+  parameters: [pos : Position, start : Nat, finish : Nat],
+  result: Bool,
+  body: (pathClear pos start finish (heading (fileOf start) (fileOf finish)) (heading (rankOf start) (rankOf finish)) 7)
+}
+
+definition{
+  name: hasRight,
+  parameters: [castling : Nat, bit : Nat],
+  result: Bool,
+  body: ((prim remainder (prim quotient castling (if (bit =? 0) then 1 else (if (bit =? 1) then 2 else (if (bit =? 2) then 4 else 8))) 0 : Nat) 2 0 : Nat) =? 1)
+}
+
+definition{
+  name: castleOk,
+  parameters: [pos : Position, start : Nat, finish : Nat],
+  result: Bool,
+  body: (let mover : Bool := (project pos white); (let home : Nat := (if mover then 4 else 60); (let foe : Bool := (not mover); ((start =? home) && (((pieceAt pos home) =? (tint mover 6)) && ((not (attackedBy pos home foe)) && (((finish =? (home + 2)) && ((hasRight (project pos rights) (if mover then 0 else 2)) && (((pieceAt pos (home + 3)) =? (tint mover 4)) && ((isEmpty pos (home + 1)) && ((isEmpty pos (home + 2)) && ((not (attackedBy pos (home + 1) foe)) && (not (attackedBy pos (home + 2) foe)))))))) || ((finish =? (prim subtract home 2 : Nat)) && ((hasRight (project pos rights) (if mover then 1 else 3)) && (((pieceAt pos (prim subtract home 4 : Nat)) =? (tint mover 4)) && ((isEmpty pos (prim subtract home 1 : Nat)) && ((isEmpty pos (prim subtract home 2 : Nat)) && ((isEmpty pos (prim subtract home 3 : Nat)) && ((not (attackedBy pos (prim subtract home 1 : Nat) foe)) && (not (attackedBy pos (prim subtract home 2 : Nat) foe))))))))))))))))
+}
+
+definition{
+  name: pawnOk,
+  parameters: [pos : Position, start : Nat, finish : Nat],
+  result: Bool,
+  body: (let mover : Bool := (project pos white); (let ahead : Nat := (if mover then 9 else 7); (let single : Nat := (stepTo start 8 ahead); (let landing : Nat := (pieceAt pos finish); (((finish =? single) && (landing =? 0)) || (((finish =? (stepTo single 8 ahead)) && (((rankOf start) =? (if mover then 1 else 6)) && ((isEmpty pos single) && (landing =? 0)))) || (((finish =? (stepTo start 7 ahead)) || (finish =? (stepTo start 9 ahead))) && ((isFoe mover landing) || (((fileOf finish) =? (project pos passant)) && (((rankOf finish) =? (if mover then 5 else 2)) && (landing =? 0)))))))))))
+}
+
+definition{
+  name: promotes,
+  parameters: [pos : Position, start : Nat, finish : Nat],
+  result: Bool,
+  body: (((kindOf (pieceAt pos start)) =? 1) && ((rankOf finish) =? (if (project pos white) then 7 else 0)))
+}
+
+definition{
+  name: pseudoOk,
+  parameters: [pos : Position, move : Move],
+  result: Bool,
+  body: (let mover : Bool := (project pos white); (let start : Nat := (project move origin); (let finish : Nat := (project move target); (let code : Nat := (pieceAt pos start); (let kind : Nat := (kindOf code); (let across : Nat := (distance (fileOf start) (fileOf finish)); (let along : Nat := (distance (rankOf start) (rankOf finish)); (let piece : Nat := (project move promotion); ((start <? 64) && ((finish <? 64) && ((not (start =? finish)) && ((isFriend mover code) && ((not (isFriend mover (pieceAt pos finish))) && ((if (promotes pos start finish) then ((2 <=? piece) && (piece <=? 5)) else (piece =? 0)) && (if (kind =? 2) then (((across =? 1) && (along =? 2)) || ((across =? 2) && (along =? 1))) else (if (kind =? 6) then (((across <=? 1) && (along <=? 1)) || (castleOk pos start finish)) else (if (kind =? 4) then (((across =? 0) || (along =? 0)) && (slideClear pos start finish)) else (if (kind =? 3) then ((across =? along) && (slideClear pos start finish)) else (if (kind =? 5) then (((across =? 0) || ((along =? 0) || (across =? along))) && (slideClear pos start finish)) else (pawnOk pos start finish))))))))))))))))))))
+}
+
+definition{
+  name: keepRight,
+  parameters: [
+    castling : Nat,
+    bit : Nat,
+    start : Nat,
+    finish : Nat,
+    kingHome : Nat,
+    rookHome : Nat
+  ],
+  result: Nat,
+  body: (if ((start =? kingHome) || ((start =? rookHome) || ((finish =? kingHome) || (finish =? rookHome)))) then 0 else (if (hasRight castling bit) then (if (bit =? 0) then 1 else (if (bit =? 1) then 2 else (if (bit =? 2) then 4 else 8))) else 0))
+}
+
+definition{
+  name: playMove,
+  parameters: [pos : Position, move : Move],
+  result: Position,
+  body: (let mover : Bool := (project pos white); (let start : Nat := (project move origin); (let finish : Nat := (project move target); (let code : Nat := (pieceAt pos start); (let kind : Nat := (kindOf code); (let placed : Nat := (if (0 <? (project move promotion)) then (tint mover (project move promotion)) else code); (let moved : Position := (withPiece (withPiece pos start 0) finish placed); (let cleared : Position := (if ((kind =? 1) && ((not ((fileOf start) =? (fileOf finish))) && ((pieceAt pos finish) =? 0))) then (withPiece moved ((prim multiply (rankOf start) 8 : Nat) + (fileOf finish)) 0) else moved); (let castled : Position := (if ((kind =? 6) && (finish =? (start + 2))) then (withPiece (withPiece cleared (start + 3) 0) (start + 1) (tint mover 4)) else (if ((kind =? 6) && (start =? (finish + 2))) then (withPiece (withPiece cleared (prim subtract start 4 : Nat) 0) (prim subtract start 1 : Nat) (tint mover 4)) else cleared)); (let castling : Nat := (project pos rights); (record Position {w0 := (project castled w0), w1 := (project castled w1), w2 := (project castled w2), w3 := (project castled w3), white := (not mover), rights := ((keepRight castling 0 start finish 4 7) + ((keepRight castling 1 start finish 4 0) + ((keepRight castling 2 start finish 60 63) + (keepRight castling 3 start finish 60 56)))), passant := (if ((kind =? 1) && ((distance (rankOf start) (rankOf finish)) =? 2)) then (fileOf start) else 8)})))))))))))
+}
+
+definition{
+  name: leavesKingSafe,
+  parameters: [pos : Position, move : Move],
+  result: Bool,
+  body: (let after : Position := (playMove pos move); (not (attackedBy after (kingSquare after (project pos white)) (not (project pos white)))))
+}
+
+definition{
+  name: isLegalMove,
+  parameters: [pos : Position, move : Move],
+  result: Bool,
+  body: ((pseudoOk pos move) && (leavesKingSafe pos move))
+}
+
+definition{
+  name: valueLegal,
+  parameters: [pos : Position, move : Move],
+  result: Nat,
+  body: (if (isLegalMove pos move) then 1 else 0)
+}
+
+definition{
+  name: pairLegal,
+  parameters: [pos : Position, start : Nat, finish : Nat],
+  result: Nat,
+  body: (if (promotes pos start finish) then ((valueLegal pos (mkMove start finish 5)) + ((valueLegal pos (mkMove start finish 4)) + ((valueLegal pos (mkMove start finish 3)) + (valueLegal pos (mkMove start finish 2))))) else (valueLegal pos (mkMove start finish 0)))
+}
+
+definition{
+  name: targetsLegal,
+  parameters: [pos : Position, start : Nat, finish : Nat, fuel : Nat],
+  result: Nat,
+  body: (match fuel
+    | Nat.zero => 0
+    | Nat.succ spare => ((pairLegal pos start finish) + (targetsLegal pos start (finish + 1) spare))),
+  recursive_argument: fuel
+}
+
+definition{
+  name: originsLegal,
+  parameters: [pos : Position, start : Nat, fuel : Nat],
+  result: Nat,
+  body: (match fuel
+    | Nat.zero => 0
+    | Nat.succ spare => ((if (isFriend (project pos white) (pieceAt pos start)) then (targetsLegal pos start 0 64) else 0) + (originsLegal pos (start + 1) spare))),
+  recursive_argument: fuel
+}
+
+definition{
+  name: countLegal,
+  parameters: [pos : Position],
+  result: Nat,
+  body: (originsLegal pos 0 64)
+}
+
+definition{
+  name: valueTwo,
+  parameters: [pos : Position, move : Move],
+  result: Nat,
+  body: (if (isLegalMove pos move) then (countLegal (playMove pos move)) else 0)
+}
+
+definition{
+  name: pairTwo,
+  parameters: [pos : Position, start : Nat, finish : Nat],
+  result: Nat,
+  body: (if (promotes pos start finish) then ((valueTwo pos (mkMove start finish 5)) + ((valueTwo pos (mkMove start finish 4)) + ((valueTwo pos (mkMove start finish 3)) + (valueTwo pos (mkMove start finish 2))))) else (valueTwo pos (mkMove start finish 0)))
+}
+
+definition{
+  name: targetsTwo,
+  parameters: [pos : Position, start : Nat, finish : Nat, fuel : Nat],
+  result: Nat,
+  body: (match fuel
+    | Nat.zero => 0
+    | Nat.succ spare => ((pairTwo pos start finish) + (targetsTwo pos start (finish + 1) spare))),
+  recursive_argument: fuel
+}
+
+definition{
+  name: originsTwo,
+  parameters: [pos : Position, start : Nat, fuel : Nat],
+  result: Nat,
+  body: (match fuel
+    | Nat.zero => 0
+    | Nat.succ spare => ((if (isFriend (project pos white) (pieceAt pos start)) then (targetsTwo pos start 0 64) else 0) + (originsTwo pos (start + 1) spare))),
+  recursive_argument: fuel
+}
+
+definition{name: countTwo, parameters: [pos : Position], result: Nat, body: (originsTwo pos 0 64)}
+
+definition{
+  name: valueThree,
+  parameters: [pos : Position, move : Move],
+  result: Nat,
+  body: (if (isLegalMove pos move) then (countTwo (playMove pos move)) else 0)
+}
+
+definition{
+  name: pairThree,
+  parameters: [pos : Position, start : Nat, finish : Nat],
+  result: Nat,
+  body: (if (promotes pos start finish) then ((valueThree pos (mkMove start finish 5)) + ((valueThree pos (mkMove start finish 4)) + ((valueThree pos (mkMove start finish 3)) + (valueThree pos (mkMove start finish 2))))) else (valueThree pos (mkMove start finish 0)))
+}
+
+definition{
+  name: targetsThree,
+  parameters: [pos : Position, start : Nat, finish : Nat, fuel : Nat],
+  result: Nat,
+  body: (match fuel
+    | Nat.zero => 0
+    | Nat.succ spare => ((pairThree pos start finish) + (targetsThree pos start (finish + 1) spare))),
+  recursive_argument: fuel
+}
+
+definition{
+  name: originsThree,
+  parameters: [pos : Position, start : Nat, fuel : Nat],
+  result: Nat,
+  body: (match fuel
+    | Nat.zero => 0
+    | Nat.succ spare => ((if (isFriend (project pos white) (pieceAt pos start)) then (targetsThree pos start 0 64) else 0) + (originsThree pos (start + 1) spare))),
+  recursive_argument: fuel
+}
+
+definition{
+  name: countThree,
+  parameters: [pos : Position],
+  result: Nat,
+  body: (originsThree pos 0 64)
+}
+
+definition{
+  name: verdict,
+  parameters: [pos : Position, move : Move],
+  result: Verdict,
+  body: (if (isLegalMove pos move) then (ctor Verdict.Legal) else (ctor Verdict.Illegal))
+}
+
+definition{
+  name: isLegal,
+  parameters: [value : Verdict],
+  result: Bool,
+  body: (match value | Verdict.Legal => true | Verdict.Illegal => false)
+}
+
+definition{
+  name: pieceValue,
+  parameters: [kind : Nat],
+  result: Nat,
+  body: (if (kind =? 1) then 100 else (if (kind =? 2) then 300 else (if (kind =? 3) then 310 else (if (kind =? 4) then 500 else (if (kind =? 5) then 900 else 0)))))
+}
+
+definition{
+  name: edgeDistance,
+  parameters: [index : Nat],
+  result: Nat,
+  body: (if (index <? 4) then index else (prim subtract 7 index : Nat))
+}
+
+definition{
+  name: placement,
+  parameters: [kind : Nat, square : Nat, side : Bool],
+  result: Nat,
+  body: (if ((kind =? 2) || (kind =? 3)) then (prim multiply ((edgeDistance (fileOf square)) + (edgeDistance (rankOf square))) 6 : Nat) else (if (kind =? 1) then ((prim multiply (edgeDistance (fileOf square)) 2 : Nat) + (prim multiply (if side then (rankOf square) else (prim subtract 7 (rankOf square) : Nat)) 4 : Nat)) else 0))
+}
+
+definition{
+  name: materialScan,
+  parameters: [pos : Position, square : Nat, fuel : Nat, whiteSum : Nat, blackSum : Nat],
+  result: Nat,
+  body: (match fuel
+    | Nat.zero => (prim subtract (100000 + whiteSum) blackSum : Nat)
+    | Nat.succ spare => (let code : Nat := (pieceAt pos square); (let worth : Nat := ((pieceValue (kindOf code)) + (placement (kindOf code) square (isWhitePiece code))); (if (isWhitePiece code) then (materialScan pos (square + 1) spare (whiteSum + worth) blackSum) else (if (isBlackPiece code) then (materialScan pos (square + 1) spare whiteSum (blackSum + worth)) else (materialScan pos (square + 1) spare whiteSum blackSum)))))),
+  recursive_argument: fuel
+}
+
+definition{
+  name: favour,
+  parameters: [engine : Bool, pos : Position],
+  result: Nat,
+  body: (if engine then (materialScan pos 0 64 0 0) else (prim subtract 200000 (materialScan pos 0 64 0 0) : Nat))
+}
+
+definition{
+  name: lower,
+  parameters: [engine : Bool, pos : Position, move : Move, floor : Nat],
+  result: Nat,
+  body: (if (isLegalMove pos move) then (let score : Nat := (favour engine (playMove pos move)); (if (score <? floor) then score else floor)) else floor)
+}
+
+definition{
+  name: lowerPair,
+  parameters: [engine : Bool, pos : Position, start : Nat, finish : Nat, floor : Nat],
+  result: Nat,
+  body: (if (promotes pos start finish) then (lower engine pos (mkMove start finish 2) (lower engine pos (mkMove start finish 3) (lower engine pos (mkMove start finish 4) (lower engine pos (mkMove start finish 5) floor)))) else (lower engine pos (mkMove start finish 0) floor))
+}
+
+definition{
+  name: lowerTargets,
+  parameters: [engine : Bool, pos : Position, start : Nat, finish : Nat, fuel : Nat, floor : Nat],
+  result: Nat,
+  body: (match fuel
+    | Nat.zero => floor
+    | Nat.succ spare => (lowerTargets engine pos start (finish + 1) spare (lowerPair engine pos start finish floor))),
+  recursive_argument: fuel
+}
+
+definition{
+  name: lowerOrigins,
+  parameters: [engine : Bool, pos : Position, start : Nat, fuel : Nat, floor : Nat],
+  result: Nat,
+  body: (match fuel
+    | Nat.zero => floor
+    | Nat.succ spare => (lowerOrigins engine pos (start + 1) spare (if (isFriend (project pos white) (pieceAt pos start)) then (lowerTargets engine pos start 0 64 floor) else floor))),
+  recursive_argument: fuel
+}
+
+definition{
+  name: judge,
+  parameters: [engine : Bool, pos : Position, move : Move],
+  result: Nat,
+  body: (let after : Position := (playMove pos move); (if ((countLegal after) =? 0) then (if (inCheck after) then 1000000 else 100000) else (lowerOrigins engine after 0 64 2000000)))
+}
+
+definition{
+  name: better,
+  parameters: [pos : Position, move : Move, best : Choice],
+  result: Choice,
+  body: (if (isLegalMove pos move) then (let score : Nat := (judge (project pos white) pos move); (if ((project best worth) <? score) then (record Choice {chosen := move, worth := score}) else best)) else best)
+}
+
+definition{
+  name: betterPair,
+  parameters: [pos : Position, start : Nat, finish : Nat, best : Choice],
+  result: Choice,
+  body: (if (promotes pos start finish) then (better pos (mkMove start finish 2) (better pos (mkMove start finish 3) (better pos (mkMove start finish 4) (better pos (mkMove start finish 5) best)))) else (better pos (mkMove start finish 0) best))
+}
+
+definition{
+  name: bestTargets,
+  parameters: [pos : Position, start : Nat, finish : Nat, fuel : Nat, best : Choice],
+  result: Choice,
+  body: (match fuel
+    | Nat.zero => best
+    | Nat.succ spare => (bestTargets pos start (finish + 1) spare (betterPair pos start finish best))),
+  recursive_argument: fuel
+}
+
+definition{
+  name: bestOrigins,
+  parameters: [pos : Position, start : Nat, fuel : Nat, best : Choice],
+  result: Choice,
+  body: (match fuel
+    | Nat.zero => best
+    | Nat.succ spare => (bestOrigins pos (start + 1) spare (if (isFriend (project pos white) (pieceAt pos start)) then (bestTargets pos start 0 64 best) else best))),
+  recursive_argument: fuel
+}
+
+definition{
+  name: candidate,
+  parameters: [pos : Position],
+  result: Move,
+  body: (project (bestOrigins pos 0 64 (record Choice {chosen := (mkMove 64 64 0), worth := 0})) chosen)
+}
+
+definition{
+  name: gate,
+  parameters: [choice : Move, check : Verdict],
+  result: Reply,
+  body: (match check
+    | Verdict.Legal => (ctor Reply.Played choice)
+    | Verdict.Illegal => (ctor Reply.Passed))
+}
+
+definition{
+  name: playsOnlyLegal,
+  parameters: [check : Verdict, answer : Reply],
+  result: Bool,
+  body: (match answer | Reply.Played played => (isLegal check) | Reply.Passed => true)
+}
+
+theorem{
+  name: gate_plays_only_legal,
+  parameters: [choice : Move, check : Verdict],
+  statement: ((playsOnlyLegal check (gate choice check)) = true),
+  proof: cases{
+    branches: [
+      {proof: reflexivity{}, binders: [], constructor: Legal},
+      {proof: reflexivity{}, binders: [], constructor: Illegal}
+    ],
+    scrutinee: check
+  }
+}
+
+definition{
+  name: reply,
+  parameters: [pos : Position],
+  result: Reply,
+  body: (gate (candidate pos) (verdict pos (candidate pos)))
+}
+
+theorem{
+  name: reply_is_legal,
+  parameters: [pos : Position],
+  statement: ((playsOnlyLegal (verdict pos (candidate pos)) (reply pos)) = true),
+  proof: apply{
+    arguments: [(candidate pos), (verdict pos (candidate pos))],
+    theorem: gate_plays_only_legal
+  }
+}
+
+definition{
+  name: admitGate,
+  parameters: [pos : Position, move : Move, check : Verdict],
+  result: Outcome,
+  body: (match check
+    | Verdict.Legal => (ctor Outcome.Accepted (playMove pos move))
+    | Verdict.Illegal => (ctor Outcome.Rejected))
+}
+
+definition{
+  name: acceptsOnlyLegal,
+  parameters: [check : Verdict, outcome : Outcome],
+  result: Bool,
+  body: (match outcome | Outcome.Accepted after => (isLegal check) | Outcome.Rejected => true)
+}
+
+theorem{
+  name: gate_accepts_only_legal,
+  parameters: [pos : Position, move : Move, check : Verdict],
+  statement: ((acceptsOnlyLegal check (admitGate pos move check)) = true),
+  proof: cases{
+    branches: [
+      {proof: reflexivity{}, binders: [], constructor: Legal},
+      {proof: reflexivity{}, binders: [], constructor: Illegal}
+    ],
+    scrutinee: check
+  }
+}
+
+definition{
+  name: admitMove,
+  parameters: [pos : Position, move : Move],
+  result: Outcome,
+  body: (admitGate pos move (verdict pos move))
+}
+
+theorem{
+  name: admit_is_legal,
+  parameters: [pos : Position, move : Move],
+  statement: ((acceptsOnlyLegal (verdict pos move) (admitMove pos move)) = true),
+  proof: apply{arguments: [pos, move, (verdict pos move)], theorem: gate_accepts_only_legal}
+}
+
+definition{
+  name: codeAt,
+  parameters: [cells : Bytes, square : Nat],
+  result: Nat,
+  body: (match (Foundation.Bytes::byteAt cells square)
+    | Option.none => 0
+    | Option.some byte => (prim to_nat byte : Nat)),
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: asciiTable,
+  parameters: [],
+  result: Bytes,
+  body: 0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f
+}
+
+definition{
+  name: glyphOf,
+  parameters: [code : Nat],
+  result: Bytes,
+  body: (match (Foundation.Bytes::sliceBytes (asciiTable) code 1)
+    | Option.none => 0x2e
+    | Option.some single => single)
+}
+
+definition{
+  name: letterKind,
+  parameters: [upper : Nat],
+  result: Nat,
+  body: (if (upper =? 80) then 1 else (if (upper =? 78) then 2 else (if (upper =? 66) then 3 else (if (upper =? 82) then 4 else (if (upper =? 81) then 5 else (if (upper =? 75) then 6 else 15))))))
+}
+
+definition{
+  name: pieceOfChar,
+  parameters: [letter : Nat],
+  result: Nat,
+  body: (if (letter =? 46) then 0 else (if ((65 <=? letter) && (letter <=? 90)) then (letterKind letter) else (if ((97 <=? letter) && (letter <=? 122)) then (let kind : Nat := (letterKind (prim subtract letter 32 : Nat)); (if (kind =? 15) then 15 else (kind + 8))) else 15)))
+}
+
+definition{
+  name: charOfPiece,
+  parameters: [code : Nat],
+  result: Nat,
+  body: (let kind : Nat := (kindOf code); (let upper : Nat := (if (kind =? 1) then 80 else (if (kind =? 2) then 78 else (if (kind =? 3) then 66 else (if (kind =? 4) then 82 else (if (kind =? 5) then 81 else 75))))); (if (code =? 0) then 46 else (if (isBlackPiece code) then (upper + 32) else upper))))
+}
+
+definition{
+  name: emptyPosition,
+  parameters: [],
+  result: Position,
+  body: (record Position {w0 := 0, w1 := 0, w2 := 0, w3 := 0, white := true, rights := 0, passant := 8})
+}
+
+definition{
+  name: readCells,
+  parameters: [raw : Bytes, pos : Position, square : Nat, fuel : Nat],
+  result: Position,
+  body: (match fuel
+    | Nat.zero => pos
+    | Nat.succ spare => (readCells raw (withPiece pos square (pieceOfChar (codeAt raw square))) (square + 1) spare)),
+  axioms: [Quot.sound, propext],
+  recursive_argument: fuel
+}
+
+definition{
+  name: cellsValid,
+  parameters: [pos : Position, square : Nat, fuel : Nat],
+  result: Bool,
+  body: (match fuel
+    | Nat.zero => true
+    | Nat.succ spare => ((not ((pieceAt pos square) =? 15)) && (cellsValid pos (square + 1) spare))),
+  recursive_argument: fuel
+}
+
+definition{
+  name: countCode,
+  parameters: [pos : Position, code : Nat, square : Nat, fuel : Nat],
+  result: Nat,
+  body: (match fuel
+    | Nat.zero => 0
+    | Nat.succ spare => ((if ((pieceAt pos square) =? code) then 1 else 0) + (countCode pos code (square + 1) spare))),
+  recursive_argument: fuel
+}
+
+definition{
+  name: rightAt,
+  parameters: [raw : Bytes, index : Nat, letter : Nat, bit : Nat],
+  result: Nat,
+  body: (if ((codeAt raw index) =? letter) then bit else (if ((codeAt raw index) =? 45) then 0 else 16)),
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: decodePosition,
+  parameters: [raw : Bytes],
+  result: Decoded,
+  body: (let cells : Position := (readCells raw (emptyPosition) 0 64); (let side : Nat := (codeAt raw 64); (let castling : Nat := ((rightAt raw 65 75 1) + ((rightAt raw 66 81 2) + ((rightAt raw 67 107 4) + (rightAt raw 68 113 8)))); (let mark : Nat := (codeAt raw 69); (let mover : Bool := (side =? 119); (let pos : Position := (record Position {w0 := (project cells w0), w1 := (project cells w1), w2 := (project cells w2), w3 := (project cells w3), white := mover, rights := castling, passant := (if (mark =? 45) then 8 else (prim subtract mark 97 : Nat))}); (if ((69 <? (Foundation.Bytes::byteLength raw)) && ((cellsValid pos 0 64) && (((side =? 119) || (side =? 98)) && ((castling <? 16) && (((mark =? 45) || ((97 <=? mark) && (mark <=? 104))) && (((countCode pos 6 0 64) =? 1) && (((countCode pos 14 0 64) =? 1) && (not (attackedBy pos (kingSquare pos (not mover)) mover))))))))) then (ctor Decoded.Valid pos) else (ctor Decoded.Invalid)))))))),
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: writeCells,
+  parameters: [pos : Position, square : Nat, fuel : Nat],
+  result: Bytes,
+  body: (match fuel
+    | Nat.zero => 0x
+    | Nat.succ spare => (prim append (glyphOf (charOfPiece (pieceAt pos square))) (writeCells pos (square + 1) spare) : Bytes)),
+  recursive_argument: fuel
+}
+
+definition{
+  name: rightChar,
+  parameters: [castling : Nat, bit : Nat, letter : Nat],
+  result: Bytes,
+  body: (glyphOf (if (hasRight castling bit) then letter else 45))
+}
+
+definition{
+  name: encodePosition,
+  parameters: [pos : Position],
+  result: Bytes,
+  body: (let castling : Nat := (project pos rights); (prim append (writeCells pos 0 64) (prim append (glyphOf (if (project pos white) then 119 else 98)) (prim append (rightChar castling 0 75) (prim append (rightChar castling 1 81) (prim append (rightChar castling 2 107) (prim append (rightChar castling 3 113) (glyphOf (if ((project pos passant) <? 8) then (97 + (project pos passant)) else 45)) : Bytes) : Bytes) : Bytes) : Bytes) : Bytes) : Bytes))
+}
+
+definition{
+  name: squareAt,
+  parameters: [raw : Bytes, offset : Nat],
+  result: Nat,
+  body: (let column : Nat := (codeAt raw offset); (let row : Nat := (codeAt raw (offset + 1)); (if ((97 <=? column) && ((column <=? 104) && ((49 <=? row) && (row <=? 56)))) then ((prim multiply (prim subtract row 49 : Nat) 8 : Nat) + (prim subtract column 97 : Nat)) else 64))),
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: promotionAt,
+  parameters: [raw : Bytes, size : Nat],
+  result: Nat,
+  body: (if (size =? 75) then 0 else (let letter : Nat := (codeAt raw 75); (if (letter =? 113) then 5 else (if (letter =? 114) then 4 else (if (letter =? 98) then 3 else (if (letter =? 110) then 2 else 64)))))),
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: decodeMove,
+  parameters: [raw : Bytes, size : Nat],
+  result: MoveRead,
+  body: (let start : Nat := (squareAt raw 71); (let finish : Nat := (squareAt raw 73); (let piece : Nat := (promotionAt raw size); (if ((start <? 64) && ((finish <? 64) && (piece <? 64))) then (ctor MoveRead.Read (mkMove start finish piece)) else (ctor MoveRead.Unread))))),
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: promotionLetter,
+  parameters: [piece : Nat],
+  result: Bytes,
+  body: (if (piece =? 5) then 0x71 else (if (piece =? 4) then 0x72 else (if (piece =? 3) then 0x62 else (if (piece =? 2) then 0x6e else 0x))))
+}
+
+definition{
+  name: encodeMove,
+  parameters: [move : Move],
+  result: Bytes,
+  body: (prim append (glyphOf (97 + (fileOf (project move origin)))) (prim append (glyphOf (49 + (rankOf (project move origin)))) (prim append (glyphOf (97 + (fileOf (project move target)))) (prim append (glyphOf (49 + (rankOf (project move target)))) (promotionLetter (project move promotion)) : Bytes) : Bytes) : Bytes) : Bytes)
+}
+
+definition{
+  name: statusText,
+  parameters: [pos : Position],
+  result: Bytes,
+  body: (if ((countLegal pos) =? 0) then (if (inCheck pos) then (prim utf8_encode "checkmate" : Bytes) else (prim utf8_encode "stalemate" : Bytes)) else (if (inCheck pos) then (prim utf8_encode "check" : Bytes) else (prim utf8_encode "play" : Bytes)))
+}
+
+definition{
+  name: report,
+  parameters: [pos : Position, played : Bytes],
+  result: Bytes,
+  body: (prim append (encodePosition pos) (prim append 0x20 (prim append played (prim append 0x20 (statusText pos) : Bytes) : Bytes) : Bytes) : Bytes)
+}
+
+definition{
+  name: engineTurn,
+  parameters: [pos : Position],
+  result: Bytes,
+  body: (match (reply pos)
+    | Reply.Played played => (report (playMove pos played) (encodeMove played))
+    | Reply.Passed => (report pos 0x2d))
+}
+
+definition{
+  name: userTurn,
+  parameters: [pos : Position, move : Move],
+  result: Bytes,
+  body: (match (admitMove pos move)
+    | Outcome.Accepted after => (if ((countLegal after) =? 0) then (report after 0x2d) else (engineTurn after))
+    | Outcome.Rejected => (prim utf8_encode "illegal move" : Bytes))
+}
+
+definition{
+  name: digitsOf,
+  parameters: [count : Nat, fuel : Nat],
+  result: Bytes,
+  body: (match fuel
+    | Nat.zero => 0x
+    | Nat.succ spare => (if (count <? 10) then (glyphOf (48 + count)) else (prim append (digitsOf (prim quotient count 10 0 : Nat) spare) (glyphOf (48 + (prim remainder count 10 0 : Nat))) : Bytes))),
+  recursive_argument: fuel
+}
+
+definition{
+  name: perftText,
+  parameters: [pos : Position],
+  result: Bytes,
+  body: (prim append (digitsOf (countLegal pos) 20) (prim append 0x20 (prim append (digitsOf (countTwo pos) 20) (prim append 0x20 (digitsOf (countThree pos) 20) : Bytes) : Bytes) : Bytes) : Bytes)
+}
+
+definition{
+  name: dispatch,
+  parameters: [value : Bytes],
+  result: Bytes,
+  body: (let size : Nat := (Foundation.Bytes::byteLength value); (match (decodePosition value)
+    | Decoded.Invalid => (prim utf8_encode "invalid request" : Bytes)
+    | Decoded.Valid pos => (if (size =? 70) then (engineTurn pos) else (if ((size =? 71) && ((codeAt value 70) =? 63)) then (perftText pos) else (if (((size =? 75) || (size =? 76)) && ((codeAt value 70) =? 32)) then (match (decodeMove value size)
+      | MoveRead.Read move => (userTurn pos move)
+      | MoveRead.Unread => (prim utf8_encode "invalid request" : Bytes)) else (prim utf8_encode "invalid request" : Bytes)))))),
+  axioms: [Quot.sound, propext]
+}
+
+definition{
+  name: application,
+  parameters: [],
+  result: Foundation.View.Text.V1.Model::TextApplication,
+  body: (record Foundation.View.Text.V1.Model::TextApplication {profile := "prismpm/text-application/1", name := "Legal chess", cargoName := "prism-legal-chess", cargoVersion := "0.1.0", cargoDescription := "A chess opponent that never accepts or plays an illegal move.", cargoRepository := "https://github.com/humuhumu33/prism-legal-chess", cargoHomepage := "https://humuhumu33.github.io/prism-legal-chess/", libraryRoots := (cons "PrismLegalChess.Chess.dispatch" (nil String)), acceptanceVectors := (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x524e42514b424e5250505050505050502e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e7070707070707070726e62716b626e72774b516b712d3f, response := 0x3230203430302038393032}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x522e2e2e4b2e2e5250505042425050502e2e4e2e2e512e702e702e2e502e2e2e2e2e2e504e2e2e2e626e2e2e706e702e702e70707170622e722e2e2e6b2e2e72774b516b712d3f, response := 0x34382032303339203937383632}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x2e2e2e2e2e2e2e2e2e2e2e2e502e502e2e2e2e2e2e2e2e2e2e522e2e2e702e6b4b502e2e2e2e2e722e2e2e702e2e2e2e2e2e702e2e2e2e2e2e2e2e2e2e2e2e2e772d2d2d2d2d3f, response := 0x3134203139312032383132}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x522e2e512e524b2e50702e502e2e5050712e2e2e2e4e2e2e4242502e502e2e2e6e502e2e2e2e2e2e2e622e2e2e6e624e507070702e707070722e2e2e6b2e2e72772d2d6b712d3f, response := 0x36203236342039343637}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x524e42514b2e2e525050502e4e6e50502e2e2e2e2e2e2e2e2e2e422e2e2e2e2e2e2e2e2e2e2e2e2e2e2e702e2e2e2e2e70702e5062707070726e62712e6b2e72774b512d2d2d3f, response := 0x34342031343836203632333739}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x524e42514b424e5250505050505050502e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e7070707070707070726e62716b626e72774b516b712d2065326535, response := 0x696c6c6567616c206d6f7665}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x524e42514b424e5250505050505050502e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e7070707070707070726e62716b626e72774b516b712d2065376535, response := 0x696c6c6567616c206d6f7665}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x524e42514b424e5250505050505050502e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e7070707070707070726e62716b626e72774b516b712d2065327a34, response := 0x696e76616c69642072657175657374}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x524e42514b424e5250505050505050502e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e7070707070707070726e62716b626e72784b516b712d, response := 0x696e76616c69642072657175657374}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x524e425151424e5250505050505050502e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e7070707070707070726e62716b626e72774b516b712d, response := 0x696e76616c69642072657175657374}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x, response := 0x696e76616c69642072657175657374}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x7878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878787878, response := 0x696e76616c69642072657175657374}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x524e42514b424e5250505050505050502e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e7070707070707070726e62716b626e72774b516b712d, response := 0x522e42514b424e5250505050505050502e2e4e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e7070707070707070726e62716b626e72624b516b712d206231633320706c6179}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x524e42514b424e5250505050505050502e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e7070707070707070726e62716b626e72774b516b712d2065326534, response := 0x524e42514b424e52505050502e5050502e2e2e2e2e2e2e2e2e2e2e2e502e2e2e2e2e2e2e2e2e2e2e2e2e6e2e2e2e2e2e7070707070707070722e62716b626e72774b516b712d206238633620706c6179}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x524e42514b424e5250505050502e2e502e2e2e2e2e502e2e2e2e2e2e2e2e502e2e2e2e2e702e2e2e2e2e2e2e2e2e2e2e707070702e707070726e62716b626e72624b516b7167, response := 0x524e42514b424e5250505050502e2e502e2e2e2e2e502e2e2e2e2e2e2e2e50712e2e2e2e702e2e2e2e2e2e2e2e2e2e2e707070702e707070726e622e6b626e72774b516b712d206438683420636865636b6d617465}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x524e422e4b2e4e52505050502e5050502e2e2e2e2e2e2e2e2e2e422e502e2e2e2e2e2e2e702e2e512e2e6e2e2e6e2e2e707070702e707070722e62716b622e72774b516b712d2068356637, response := 0x524e422e4b2e4e52505050502e5050502e2e2e2e2e2e2e2e2e2e422e502e2e2e2e2e2e2e702e2e2e2e2e6e2e2e6e2e2e707070702e517070722e62716b622e72624b516b712d202d20636865636b6d617465}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x524e42514b2e2e52505050502e5050502e2e2e2e2e4e2e2e2e2e422e502e2e2e2e2e2e2e702e2e2e2e2e6e2e2e2e2e2e707070702e707070722e62716b626e72774b516b712d2065316731, response := 0x524e42512e524b2e505050502e5050502e2e2e2e2e4e2e2e2e2e422e502e2e2e2e2e622e702e2e2e2e2e6e2e2e2e2e2e707070702e707070722e62716b2e6e72772d2d6b712d206638633520706c6179}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x2e2e2e2e2e2e2e4b6b2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e502e2e2e2e2e2e2e2e2e2e2e2e2e2e2e772d2d2d2d2d206137613871, response := 0x2e6b2e2e2e2e2e4b2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e512e2e2e2e2e2e2e772d2d2d2d2d206132623120706c6179}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x2e2e2e2e2e2e2e4b6b2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e502e2e2e2e2e2e2e2e2e2e2e2e2e2e2e772d2d2d2d2d2061376138, response := 0x696c6c6567616c206d6f7665}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x2e2e2e2e4b2e2e2e2e2e2e2e422e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e722e2e2e2e2e2e2e6b2e2e2e772d2d2d2d2d2065326433, response := 0x696c6c6567616c206d6f7665}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x2e2e2e2e4b2e2e2e2e2e2e2e422e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e722e2e2e2e2e2e2e6b2e2e2e772d2d2d2d2d2065316631, response := 0x2e2e2e2e2e4b2e2e2e2e2e2e422e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e722e2e2e2e2e2e6b2e2e2e772d2d2d2d2d206537663720636865636b}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e4b2e2e2e2e2e2e512e2e2e2e2e2e2e2e2e6b622d2d2d2d2d, response := 0x2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e4b2e2e2e2e2e2e512e2e2e2e2e2e2e2e2e6b622d2d2d2d2d202d207374616c656d617465}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x524e42514b424e52505050502e5050502e2e2e2e2e2e2e2e2e2e2e70502e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e7070702e70707070726e62716b626e72624b516b71652064346533, response := 0x524e42514b424e52505050502e2e50502e2e2e2e502e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e7070702e70707070726e62716b626e72624b516b712d206632653320706c6179}) (cons (record Foundation.View.Text.V1.Model::AcceptanceVector {request := 0x2e2e2e2e524b2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e6b2e2e2e772d2d2d2d2d, response := 0x696e76616c69642072657175657374}) (nil Foundation.View.Text.V1.Model::AcceptanceVector))))))))))))))))))))))))), entryRoot := "PrismLegalChess.Chess.dispatch", coreContract := "hologram:guest/core-wasm@1", requestMaximum := (76 : UInt32), responseMaximum := (96 : UInt32), guestAllocationMaximum := (128 : UInt32), capabilitiesEmpty := true, fatArchive := true, primaryLayer := (0 : UInt8), viewLayer := (1 : UInt8), view := (record Foundation.View.Text.V1.Model::TextView {title := "Legal chess", heading := "Legal chess", inputLabel := "Position and move", submitLabel := "Play", outputLabel := "Position after the reply", inputError := "Invalid request", responseError := "Invalid response"})})
+}
+\end{semanticmodule}
+\end{lexlean}

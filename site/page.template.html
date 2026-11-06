@@ -36,6 +36,30 @@
 
       <div class="panes">
         <div class="pane">
+          <section class="card" aria-labelledby="play-title">
+            <h2 id="play-title">Play</h2>
+            <p class="row">
+              <span id="game-status" class="chip chip-wait" aria-live="polite">loading the app</span>
+            </p>
+            <div id="board" class="board" role="grid" aria-label="Chess board" aria-busy="true"></div>
+            <div class="row controls">
+              <button id="new-white" class="secondary" type="button">New game as White</button>
+              <button id="new-black" class="secondary" type="button">New game as Black</button>
+              <label for="promotion" class="muted">Promote to</label>
+              <select id="promotion">
+                <option value="q">Queen</option>
+                <option value="r">Rook</option>
+                <option value="b">Bishop</option>
+                <option value="n">Knight</option>
+              </select>
+            </div>
+            <details class="disclosure">
+              <summary>Moves and the exact requests</summary>
+              <ol id="game-log" class="moves mono"></ol>
+              <pre id="game-wire" class="mono wire"></pre>
+            </details>
+          </section>
+
           <section class="card" aria-labelledby="identity-title">
             <h2 id="identity-title">Identity</h2>
             <dl class="facts">
@@ -98,7 +122,7 @@
             <form id="form" class="try">
               <label for="request" id="request-label">{{INPUT_LABEL}}</label>
               <div class="row">
-                <input id="request" type="text" autocomplete="off" spellcheck="false" inputmode="numeric" enterkeyhint="send" placeholder="{{PLACEHOLDER}}" />
+                <input id="request" type="text" autocomplete="off" spellcheck="false" enterkeyhint="send" placeholder="{{PLACEHOLDER}}" />
                 <button id="submit" class="primary" type="submit">{{SUBMIT_LABEL}}</button>
               </div>
               <p class="hint muted">Text, or <code>hex:</code> followed by bytes.</p>

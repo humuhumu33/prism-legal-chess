@@ -1,40 +1,66 @@
 {
-  "name": "Template contract",
-  "shortName": "Contract",
-  "live": "https://uor-foundation.github.io/template/",
-  "purpose": "Checks each universal policy file of a UOR template repository against its locked digest. Send the six expected and observed digests; it answers conformant, or names every file that drifted, and invalid request for anything else.",
-  "inputLabel": "Expected and observed digests",
-  "placeholder": "hex: followed by 384 bytes",
-  "submitLabel": "Check",
-  "outputLabel": "Verdict",
+  "name": "Legal chess",
+  "shortName": "Chess",
+  "live": "https://humuhumu33.github.io/prism-legal-chess/",
+  "purpose": "Play chess against an app that never accepts or plays an illegal move. Every move goes to the verified holo in your browser; it checks your move against the legal moves of the position, plays it, and answers with its own reply. It looks two moves ahead, so it is a modest opponent.",
+  "inputLabel": "Position and move",
+  "placeholder": "70-character position, a space, a move such as e2e4",
+  "submitLabel": "Play",
+  "outputLabel": "Position after the reply, the reply, the status",
   "answers": {
-    "positive": [
-      "conformant"
-    ],
+    "positive": [],
     "negative": [
-      "drift:*"
+      "illegal move"
     ],
     "refusal": "invalid request"
   },
-  "claim": "TC-01: the checker answers conformant exactly when every universal policy file's observed digest equals its locked digest.",
+  "claim": "LC-01 and LC-02: the app plays a reply, and accepts a move of yours, only when the legality gate returns Legal for that exact move. LC-03: the legal moves the gate checks against reproduce the published perft counts of five reference positions to depth three.",
   "proposition": {
-    "name": "Conformant",
-    "text": "Conformant observation :=\n  SameDigest devcontainer.expected devcontainer.observed\n  /\\ SameDigest bootstrap.expected bootstrap.observed\n  /\\ SameDigest agents.expected agents.observed\n  /\\ SameDigest verification.expected verification.observed\n  /\\ SameDigest prismpmLock.expected prismpmLock.observed\n  /\\ SameDigest templateContract.expected templateContract.observed\n\nSameDigest left right :=\n  left.w0 = right.w0 /\\ left.w1 = right.w1 /\\ left.w2 = right.w2 /\\ left.w3 = right.w3",
-    "plain": "Every one of the six universal policy files has the digest the lock says it has."
+    "name": "playsOnlyLegal",
+    "text": "playsOnlyLegal check answer :=\n  match answer with\n  | Played _ => isLegal check\n  | Passed   => true\n\nreply pos := gate (candidate pos) (verdict pos (candidate pos))\n\nverdict pos move :=\n  if isLegalMove pos move then Legal else Illegal",
+    "plain": "If the app plays a move, the verdict on that move, computed by isLegalMove from the rules of movement and king safety, is Legal. Your moves pass through the same verdict before they are played."
   },
   "theorems": [
     {
-      "name": "conformant_decides",
-      "statement": "conformant observation = true ↔ Conformant observation, for every observation",
-      "how": "Proved by simplification over the record fields, checked by the Lean kernel by prismpm verify in CI",
-      "where": "app/src/Contract.lex.tex"
+      "name": "gate_plays_only_legal",
+      "statement": "playsOnlyLegal check (gate choice check) = true, for every move and every verdict",
+      "how": "Proved by cases on the verdict, checked by the Lean kernel and leanchecker in prismpm verify, with no axiom",
+      "where": "app/src/Chess.lex.tex"
+    },
+    {
+      "name": "reply_is_legal",
+      "statement": "playsOnlyLegal (verdict pos (candidate pos)) (reply pos) = true, for every position",
+      "how": "Proved by applying gate_plays_only_legal to the engine's candidate and its verdict",
+      "where": "app/src/Chess.lex.tex"
+    },
+    {
+      "name": "gate_accepts_only_legal",
+      "statement": "acceptsOnlyLegal check (admitGate pos move check) = true, for every position, move and verdict",
+      "how": "Proved by cases on the verdict, checked by the Lean kernel and leanchecker in prismpm verify",
+      "where": "app/src/Chess.lex.tex"
+    },
+    {
+      "name": "admit_is_legal",
+      "statement": "acceptsOnlyLegal (verdict pos move) (admitMove pos move) = true, for every position and move",
+      "how": "Proved by applying gate_accepts_only_legal to the move's own verdict",
+      "where": "app/src/Chess.lex.tex"
     }
   ],
   "pinned": [
     {
-      "name": "contract_tc_01",
-      "what": "The theorem's statement and axioms, the six files the proposition names against template-contract.json, that a drifted file is named in the verdict, and that the verdict is decided by conformant. A string-matching test, not a theorem: a planted defect fails it.",
-      "where": "crates/conformance/tests/contract.rs"
+      "name": "chess_lc_01, chess_lc_02",
+      "what": "The theorems' exact statements, that the verdict is isLegalMove, that every reply the app returns comes from reply and every visitor move goes through admitMove, and that nothing plays a move around the gate. String-matching tests, not theorems: a planted defect fails them.",
+      "where": "crates/conformance/tests/chess.rs"
+    },
+    {
+      "name": "chess_lc_03",
+      "what": "That the acceptance vectors carry the Chess Programming Wiki's perft counts for five reference positions, computed from FEN by the test itself, and that the counts are sums of isLegalMove over every move. prismpm verify replays them in the compiled guest.",
+      "where": "crates/conformance/tests/chess.rs"
+    },
+    {
+      "name": "Not claimed",
+      "what": "That isLegalMove equals the rules of chess for every position: it is measured by perft, not proved. Draws by repetition, the fifty-move rule and insufficient material are not detected, because a request carries no game history.",
+      "where": "README.md"
     }
   ],
   "trusted": [
@@ -56,19 +82,19 @@
     },
     {
       "name": "Your browser",
-      "value": "runs the WebAssembly guest and this page"
+      "value": "runs the WebAssembly guest, this page and its board"
     }
   ],
   "attestations": {
     "proof": {
-      "id": "not recorded for the template's own app; an instance records the UOR MCP server's attestation here",
-      "url": "https://github.com/UOR-Foundation/template/actions/workflows/bootstrap.yml"
+      "id": "f4a6021de2acd2c6e29923d4e2803ee7084f05ef438f4d5104c90b6500c3bc09",
+      "url": "https://github.com/humuhumu33/prism-legal-chess/actions/workflows/bootstrap.yml"
     },
     "build": {
-      "id": "printed by prismpm verify in every pages run; an instance records it here",
-      "url": "https://github.com/UOR-Foundation/template/actions/workflows/pages.yml"
+      "id": "printed by prismpm verify in every pages run",
+      "url": "https://github.com/humuhumu33/prism-legal-chess/actions/workflows/pages.yml"
     }
   },
-  "repository": "https://github.com/UOR-Foundation/template",
-  "report": "https://github.com/UOR-Foundation/template/blob/main/TEMPLATE-VERIFICATION.md"
+  "repository": "https://github.com/humuhumu33/prism-legal-chess",
+  "report": "https://github.com/humuhumu33/prism-legal-chess/blob/main/TEMPLATE-VERIFICATION.md"
 }
