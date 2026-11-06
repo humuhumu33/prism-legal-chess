@@ -7,7 +7,7 @@
 // into the Content-Security-Policy. An app edits app.json and nothing else.
 //   node bootstrap/page.mjs site
 import { createHash } from "node:crypto";
-import { readFile, writeFile } from "node:fs/promises";
+import { access, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 const site = process.argv[2] ?? "site";
@@ -20,15 +20,40 @@ const sha = (text) => "'sha256-" + createHash("sha256").update(text).digest("bas
 const meta = JSON.parse(await read("app.json"));
 let html = await read("page.template.html");
 
+// The app's own card, the one place an app adds to the page beyond app.json:
+// site/card.html is a <section class="card"> drawn first in the left pane,
+// site/card.css its styles, inlined and hashed with the frame's, and
+// site/card.mjs its script, which app.mjs starts with the verified app. All
+// three are optional and belong to the app, not the frame.
+const optional = (path) => read(path).catch(() => "");
+const card = { html: (await optional("card.html")).trimEnd(), css: await optional("card.css") };
+const cardModule = await access(join(site, "card.mjs")).then(() => true, () => false);
+
 // Styles and the theme bootstrap, inlined. The brand variables come from
 // brand/hologram-warm.css and brand/fonts.css, both pinned by brand.lock.
 // Comments and indentation out: the stylesheet travels inside every page.
 const minify = (text) => text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]+/gm, "").replace(/\n{2,}/g, "\n").trim();
-const css = minify([await read("brand/hologram-warm.css"), await read("brand/fonts.css"), await read("prism-page.css")]
+const css = minify([await read("brand/hologram-warm.css"), await read("brand/fonts.css"), await read("prism-page.css"), card.css]
   .join("\n")
   .replace(/url\("\.\.\/fonts\//g, 'url("./fonts/'));
 const theme = (await read("theme.js")).trim();
 const importmap = '{ "imports": { "node:crypto": "./vendor/node-crypto-shim.mjs" } }';
+
+// The social card: bootstrap/og.py draws site/og.png from the same app.json.
+// Every platform needs absolute URLs, so they hang off the live URL.
+await access(join(site, "og.png")).catch(() => {
+  throw new Error("site/og.png is missing: run python -I bootstrap/og.py");
+});
+const live = new URL(meta.live);
+// Holo Search: the top bar's home, and where its address bar resolves a name,
+// a hash or a link, fetches the app and verifies it before opening it.
+const holoSearch = new URL("https://humuhumu33.github.io/holo-search/");
+// The canonical frame: the template's Pages site publishes it on every push
+// to main, and this page loads the current one at run time (site/app.mjs), so
+// a frame change reaches this app without rebuilding it. app.json may name
+// another frame host, for a test or a mirror.
+const frameHost = new URL(meta.frame ?? "https://uor-foundation.github.io/template/frame/");
+const shareUrl = live.href;
 
 const item = (mark, markClass, name, what) =>
   `<li><span class="${markClass}">${mark}</span><div><div class="name">${escape(name)}</div><div class="what">${escape(what)}</div></div></li>`;
@@ -36,7 +61,15 @@ const item = (mark, markClass, name, what) =>
 const fill = {
   TITLE: escape(meta.name),
   DESCRIPTION: escape(meta.purpose),
+  LIVE: escape(shareUrl),
+  HOLO_SEARCH: escape(holoSearch.href),
+  HOLO_SEARCH_ORIGIN: holoSearch.origin,
+  FRAME_ORIGIN: frameHost.origin,
+  OG_IMAGE: escape(new URL("og.png", live).href),
+  OG_ALT: escape(`${meta.name}: ${meta.purpose}`),
   NAME: escape(meta.name),
+  // The app's name as the top bar's holo:// address: lower case, words joined by hyphens.
+  HOLO_NAME: escape(meta.name.toLowerCase().normalize("NFKD").replace(/\p{M}/gu, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "app"),
   PURPOSE: escape(meta.purpose),
   CLAIM: escape(meta.claim),
   PROP_NAME: escape(meta.proposition.name),
@@ -51,6 +84,9 @@ const fill = {
   ATT_BUILD_URL: escape(meta.attestations.build.url),
   INPUT_LABEL: escape(meta.inputLabel),
   PLACEHOLDER: escape(meta.placeholder ?? ""),
+  // The keyboard a phone shows for the request: "numeric" unless app.json says otherwise.
+  INPUT_MODE: escape(meta.inputMode ?? "numeric"),
+  APP_CARD: card.html,
   SUBMIT_LABEL: escape(meta.submitLabel),
   OUTPUT_LABEL: escape(meta.outputLabel),
   REPO: escape(meta.repository),
@@ -58,7 +94,7 @@ const fill = {
   INLINE_CSS: css,
   INLINE_THEME: theme,
   IMPORTMAP: importmap,
-  APP_DATA: JSON.stringify({ answers: meta.answers }).replace(/</g, "\\u003c"),
+  APP_DATA: JSON.stringify({ answers: meta.answers, frame: frameHost.href, card: cardModule }).replace(/</g, "\\u003c"),
   CSP_SCRIPT_HASHES: `${sha(theme)} ${sha(importmap)}`,
   CSP_STYLE_HASHES: sha(css),
 };
