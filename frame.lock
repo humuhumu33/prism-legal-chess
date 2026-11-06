@@ -2,8 +2,8 @@
   "spec": "prism/frame-lock/1",
   "source": {
     "repository": "UOR-Foundation/template",
-    "commit": "1fc70a87c9f40c65b85b8c2992f50adbfdf3a8e4",
-    "raw": "https://raw.githubusercontent.com/UOR-Foundation/template/1fc70a87c9f40c65b85b8c2992f50adbfdf3a8e4/"
+    "commit": "effaf79de28a06e0ebe0a7f1e9f20d5e76dde91c",
+    "raw": "https://raw.githubusercontent.com/UOR-Foundation/template/effaf79de28a06e0ebe0a7f1e9f20d5e76dde91c/"
   },
   "files": [
     {
@@ -16,7 +16,7 @@
     },
     {
       "path": "bootstrap/page.mjs",
-      "sha256": "ef6ba0d80fb5ba1d390d793723f79f25fe14e658488059251e624b0685ee52f3"
+      "sha256": "845ee11f83a933216c2dca3e09c30df20d1ec5ccb98ed7c1885a66f91e0b0d85"
     },
     {
       "path": "bootstrap/precache.mjs",
@@ -24,15 +24,15 @@
     },
     {
       "path": "bootstrap/screens.mjs",
-      "sha256": "b25056862b55352e2daee8480e0b844836c65ed394f715bfebdf6949227e1005"
+      "sha256": "0aaef44f114dfbec5f26c4de17e580f8b3c84e9ac231546d9a8d1fd757b300e4"
     },
     {
       "path": "lighthouserc.json",
-      "sha256": "8113b276f7d10427bf134e364d9b82745c31989822fd12b404b19160b322be0c"
+      "sha256": "0145d04da93193801b0d8736ceba7e0df94b9b15f183b07a16e6feda16d72082"
     },
     {
       "path": "site/app.mjs",
-      "sha256": "b2b078524b5e503fd00fb78593dd95331de75c378846562c37572d905842e335"
+      "sha256": "d99ceb3f23f7f629b432ab9abf471cbf441f385753e782d86d76b016c12a8737"
     },
     {
       "path": "site/guest-worker.mjs",
@@ -40,15 +40,15 @@
     },
     {
       "path": "site/page.template.html",
-      "sha256": "fbe9ac622c2b195e2d6a41bccb67bf1563907b947d437c5bddee8e06930c4e12"
+      "sha256": "6db637b2c19fb61801773d140103658f0aa9966742652be20c6108172c4e5281"
     },
     {
       "path": "site/prism-page.css",
-      "sha256": "0437f76568918bb36e182f851c886014a09218a6792185a31c3aa44a7cfcb563"
+      "sha256": "4549b3577f5d7fc3d61cf0a83feed5a3f203456f67fec56fc2d897b5dfe8084e"
     },
     {
       "path": "site/sw.js",
-      "sha256": "314a3ca60b23c24fb3be4096f2dabcca9476e9dcec9cc41b272de5ed46c1d4f9"
+      "sha256": "b4d4eb5c8314f5abed013ea9d172e7352dbdfa5aa2b503901df364ebcfbf11f7"
     },
     {
       "path": "site/theme.js",
