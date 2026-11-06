@@ -1,0 +1,23 @@
+          <section class="card" aria-labelledby="play-title">
+            <h2 id="play-title">Play</h2>
+            <p class="row">
+              <span id="game-status" class="chip chip-wait" aria-live="polite">loading the app</span>
+            </p>
+            <div id="board" class="board" role="grid" aria-label="Chess board" aria-busy="true"></div>
+            <div class="row controls">
+              <button id="new-white" class="secondary" type="button">New game as White</button>
+              <button id="new-black" class="secondary" type="button">New game as Black</button>
+              <label for="promotion" class="muted">Promote to</label>
+              <select id="promotion">
+                <option value="q">Queen</option>
+                <option value="r">Rook</option>
+                <option value="b">Bishop</option>
+                <option value="n">Knight</option>
+              </select>
+            </div>
+            <details class="disclosure">
+              <summary>Moves and the exact requests</summary>
+              <ol id="game-log" class="moves mono"></ol>
+              <pre id="game-wire" class="mono wire"></pre>
+            </details>
+          </section>

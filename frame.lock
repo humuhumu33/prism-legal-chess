@@ -1,0 +1,58 @@
+{
+  "spec": "prism/frame-lock/1",
+  "source": {
+    "repository": "UOR-Foundation/template",
+    "commit": "1fc70a87c9f40c65b85b8c2992f50adbfdf3a8e4",
+    "raw": "https://raw.githubusercontent.com/UOR-Foundation/template/1fc70a87c9f40c65b85b8c2992f50adbfdf3a8e4/"
+  },
+  "files": [
+    {
+      "path": "bootstrap/frame-sync.mjs",
+      "sha256": "75720e9996c31cea7e6c6f1e39de4d1c2c55df26a8a9a08e96e539e0341f4ae5"
+    },
+    {
+      "path": "bootstrap/og.py",
+      "sha256": "988c0452445c113f5ed96f91ec77520ab1b744633550aee09dbfb10b0d631a6d"
+    },
+    {
+      "path": "bootstrap/page.mjs",
+      "sha256": "ef6ba0d80fb5ba1d390d793723f79f25fe14e658488059251e624b0685ee52f3"
+    },
+    {
+      "path": "bootstrap/precache.mjs",
+      "sha256": "d1af0e811ed68ea3695144e9c0abddd3c9bf24007b9fde8c5b12f91ec225a388"
+    },
+    {
+      "path": "bootstrap/screens.mjs",
+      "sha256": "b25056862b55352e2daee8480e0b844836c65ed394f715bfebdf6949227e1005"
+    },
+    {
+      "path": "lighthouserc.json",
+      "sha256": "8113b276f7d10427bf134e364d9b82745c31989822fd12b404b19160b322be0c"
+    },
+    {
+      "path": "site/app.mjs",
+      "sha256": "b2b078524b5e503fd00fb78593dd95331de75c378846562c37572d905842e335"
+    },
+    {
+      "path": "site/guest-worker.mjs",
+      "sha256": "0aae31bd459646dfa3a9b8f5f1e9139a34f2fc86154342c14ad5601ec9876d7e"
+    },
+    {
+      "path": "site/page.template.html",
+      "sha256": "fbe9ac622c2b195e2d6a41bccb67bf1563907b947d437c5bddee8e06930c4e12"
+    },
+    {
+      "path": "site/prism-page.css",
+      "sha256": "0437f76568918bb36e182f851c886014a09218a6792185a31c3aa44a7cfcb563"
+    },
+    {
+      "path": "site/sw.js",
+      "sha256": "314a3ca60b23c24fb3be4096f2dabcca9476e9dcec9cc41b272de5ed46c1d4f9"
+    },
+    {
+      "path": "site/theme.js",
+      "sha256": "1eec883e864bbd39bcb1b910a91fb828c7aec8ea93e22092a7cbd2f3b04086e5"
+    }
+  ]
+}

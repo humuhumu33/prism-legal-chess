@@ -184,3 +184,13 @@ export function startBoard(app, $) {
   $("new-black").addEventListener("click", () => newGame("b"));
   newGame("w");
 }
+
+// The frame's card hook: app.mjs calls this with the same verified instance
+// the identity shows, or with null and the reason the app is not there.
+export default function start({ app, reason, $, chip }) {
+  if (!app) {
+    chip($("game-status"), reason === "no app" ? "no app" : `${reason}: the board stays off`, "bad");
+    return;
+  }
+  startBoard(app, $);
+}

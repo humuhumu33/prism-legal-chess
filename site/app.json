@@ -5,6 +5,7 @@
   "purpose": "Play chess against an app that never accepts or plays an illegal move. Every move goes to the verified holo in your browser; it checks your move against the legal moves of the position, plays it, and answers with its own reply. It looks two moves ahead, so it is a modest opponent.",
   "inputLabel": "Position and move",
   "placeholder": "70-character position, a space, a move such as e2e4",
+  "inputMode": "text",
   "submitLabel": "Play",
   "outputLabel": "Position after the reply, the reply, the status",
   "answers": {

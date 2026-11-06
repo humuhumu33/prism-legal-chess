@@ -1,6 +1,6 @@
-// Runs the holo's guest off the page's main thread. A chess reply or a perft
-// count can take a second on a slow phone; here it never blocks a tap or a
-// paint. The page loads and verifies the holo itself and sends this worker
+// Runs the holo's guest off the page's main thread. A request that takes a
+// second on a slow phone (a chess reply, a long search) never blocks a tap or
+// a paint. The page loads and verifies the holo itself and sends this worker
 // the guest bytes of that same verified archive; the worker only compiles and
 // runs them with the runtime's own guest loop, one fresh instance per request.
 import { compileGuest, runGuest, runAcceptance } from "./vendor/prism-code/src/core.mjs";
