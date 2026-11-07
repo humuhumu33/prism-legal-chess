@@ -15,7 +15,9 @@
   margin-bottom: var(--space-4);
 }
 .play-head h2 { flex: none; margin: 0; }
-.play-head .chip { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; line-height: 1.625rem; }
+/* The chip keeps one size whatever it says, so a new message never moves it
+ * (a layout shift); a longer one ends in an ellipsis. */
+.play-head .chip { flex: 0 1 14rem; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; line-height: 1.625rem; text-align: center; }
 
 .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
 
