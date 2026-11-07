@@ -1,63 +1,159 @@
 /* Board. A board is an object, not a surface of the page, so it keeps the
- * same tones in both themes: the brand kit's light-theme chart-5 and chart-4
- * for the squares, its primary for black pieces and brand-foreground for
- * white ones, and the brand colour for the last move and the picked piece.
- * The squares keep their size before the app loads, so nothing shifts. */
+ * same warm wood tones in both themes, with enough contrast between squares,
+ * pieces and highlights to read at a glance. The pieces are drawn in the
+ * page (site/card.html), not taken from a system font, so they look the same
+ * on every device. The board is in the HTML in the start position, so it is
+ * there at first paint, before the app has loaded or been verified. */
+
+/* The title and the game's state share one line that never wraps, so a
+ * longer message never pushes the board down. */
+.play-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.play-head h2 { flex: none; margin: 0; }
+.play-head .chip { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; line-height: 1.625rem; }
+
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
 
 .board {
-  --board-light: #deddd4;
-  --board-dark: #a8a399;
-  --board-ink: #302b28;
-  --board-paper: #ffffff;
-  --board-mark: #e93b01;
+  --board-light: #efe0c6;
+  --board-dark: #b5875e;
+  --board-ink: #1d1815;
+  --board-white: #fbf7ef;
+  --board-black: #2a221d;
+  --board-last: rgba(255, 186, 46, 0.5);
+  --board-pick: rgba(233, 59, 1, 0.45);
+  --board-target: rgba(29, 24, 21, 0.18);
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
   aspect-ratio: 1;
   width: 100%;
-  max-width: 28rem;
-  margin: var(--space-4) 0;
-  border: var(--border-width) solid var(--board-ink);
+  /* Never taller than the screen under the top bar, so the whole board is in
+   * view at once. */
+  max-width: min(40rem, 100svh - var(--frame-bar) - 7rem);
+  min-width: min(100%, 18rem);
+  margin: 0 auto var(--space-4);
   border-radius: var(--radius-control);
   overflow: hidden;
+  outline: var(--border-width) solid var(--border);
+  outline-offset: 0;
   background: var(--board-dark);
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity var(--duration) var(--ease), filter var(--duration) var(--ease);
 }
 .board .rank { display: contents; }
+
 .board .sq {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
+  display: grid;
+  place-items: center;
   aspect-ratio: 1;
-  cursor: pointer;
-  user-select: none;
   background: var(--board-light);
-  font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", "DejaVu Sans", serif;
-  font-size: clamp(1.25rem, 7vw, 2.25rem);
+  color: var(--board-dark);
+  user-select: none;
+  -webkit-user-select: none;
+}
+.board .sq.dark { background: var(--board-dark); color: var(--board-light); }
+
+/* Coordinates, in the corner of the edge squares, in the other square tone. */
+.board .sq[data-rl]::before,
+.board .sq[data-fl]::after {
+  position: absolute;
+  font-family: var(--font-sans);
+  font-size: clamp(0.5625rem, 2.2vw, 0.75rem);
+  font-weight: 600;
   line-height: 1;
+  pointer-events: none;
 }
-.board .sq.dark { background: var(--board-dark); }
-.board .sq::before { content: attr(data-glyph); }
-.board .sq[data-side="b"]::before { color: var(--board-ink); }
-.board .sq[data-side="w"]::before {
-  color: var(--board-paper);
-  text-shadow: 1px 0 0 var(--board-ink), -1px 0 0 var(--board-ink), 0 1px 0 var(--board-ink), 0 -1px 0 var(--board-ink);
+.board .sq[data-rl]::before { content: attr(data-rl); top: 0.25em; left: 0.3em; }
+.board .sq[data-fl]::after { content: attr(data-fl); right: 0.3em; bottom: 0.25em; }
+
+/* Pieces: the symbol's body takes the fill, its outline the ink, its details
+ * currentColor, so one shape draws either side. */
+.board .pc {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: var(--pc-fill);
+  stroke: var(--board-ink);
+  stroke-width: 3.2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  color: var(--pc-detail);
+  pointer-events: none;
+  transition: transform 120ms var(--ease);
 }
-.board .sq.last { box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--board-mark) 28%, transparent); }
-.board .sq[aria-selected="true"] { box-shadow: inset 0 0 0 3px var(--board-mark); }
-.board .sq:focus-visible { outline: 3px solid var(--board-ink); outline-offset: -3px; }
+.board .sq[data-side=""] .pc { visibility: hidden; }
+.board .sq[data-side="w"] .pc { --pc-fill: var(--board-white); --pc-detail: var(--board-ink); }
+.board .sq[data-side="b"] .pc { --pc-fill: var(--board-black); --pc-detail: #e8dfcf; }
+
+/* Highlights sit between the square and the piece. */
+.board .sq.last { box-shadow: inset 0 0 0 100vmax var(--board-last); }
+.board .sq[aria-selected="true"] { box-shadow: inset 0 0 0 100vmax var(--board-pick); }
+.board .sq.check { background-image: radial-gradient(circle, rgba(231, 0, 11, 0.85) 0, rgba(231, 0, 11, 0.45) 40%, transparent 72%); }
+.board .sq:focus-visible { outline: 3px solid var(--board-ink); outline-offset: -3px; z-index: 1; }
+
+/* The visitor's own pieces can be picked up, by click or by drag. */
+.board.live .sq.own { cursor: grab; touch-action: none; }
+.board.live .sq:not(.own) { cursor: pointer; }
+.board.live.picking .sq:not(.own):hover { box-shadow: inset 0 0 0 100vmax var(--board-target); }
+.board.live .sq.own:hover .pc { transform: translateY(-2%) scale(1.04); }
+.board .sq.lifted .pc { opacity: 0.3; }
+
+/* Waiting for the app: the board is shown but does not take moves. */
 .board[aria-busy="true"] .sq { cursor: progress; }
-.controls { margin-bottom: var(--space-2); }
+.board.off { opacity: 0.6; filter: saturate(0.6); }
+.board.off .sq { cursor: not-allowed; }
+
+/* The piece under the pointer while dragging. */
+.drag-ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  pointer-events: none;
+  fill: var(--pc-fill);
+  stroke: #1d1815;
+  stroke-width: 3.2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  color: var(--pc-detail);
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.35));
+}
+.drag-ghost.w { --pc-fill: #fbf7ef; --pc-detail: #1d1815; }
+.drag-ghost.b { --pc-fill: #2a221d; --pc-detail: #e8dfcf; }
+body.dragging, body.dragging * { cursor: grabbing !important; }
+
+.controls { justify-content: flex-start; margin-bottom: var(--space-2); }
+.controls button.ghost:disabled { background: transparent; color: var(--muted-foreground-subtle); }
+.promote { display: inline-flex; align-items: center; gap: var(--space-2); font-size: var(--text-14); }
 select {
-  min-height: 2.5rem;
+  min-height: var(--control);
   padding: 0 var(--space-2);
   border: var(--border-width) solid var(--border-strong);
   border-radius: var(--radius-control);
   background: var(--card);
   color: var(--foreground);
   font: inherit;
+  font-size: var(--text-14);
 }
 .moves { margin: var(--space-2) 0; padding-inline-start: var(--space-6); max-height: 12rem; overflow-y: auto; }
 .wire:empty { display: none; }
 
 @media (pointer: coarse) {
   select { min-height: var(--touch); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board .pc, .board { transition: none; }
+  .board.live .sq.own:hover .pc { transform: none; }
+}
+
+@media (forced-colors: active) {
+  .board .sq[aria-selected="true"] { outline: 3px solid Highlight; outline-offset: -3px; }
+  .board .sq.last { outline: 2px dashed Highlight; outline-offset: -2px; }
 }

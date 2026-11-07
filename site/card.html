@@ -1,19 +1,110 @@
-          <section class="card" aria-labelledby="play-title">
-            <h2 id="play-title">Play</h2>
-            <p class="row">
+          <section class="card play" aria-labelledby="play-title">
+            <div class="play-head">
+              <h2 id="play-title">Play</h2>
               <span id="game-status" class="chip chip-wait" aria-live="polite">loading the app</span>
-            </p>
-            <div id="board" class="board" role="grid" aria-label="Chess board" aria-busy="true"></div>
+            </div>
+            <svg class="sprite" width="0" height="0" aria-hidden="true" focusable="false">
+                <symbol id="lc-p" viewBox="0 0 100 100"><path d="M42 50c0 10-6 17-11 25h38c-5-8-11-15-11-25z"/><rect x="37" y="43" width="26" height="8" rx="4"/><circle cx="50" cy="30" r="12"/><path d="M24 86h52a4 4 0 0 0 4-4v-3a4 4 0 0 0-4-4H24a4 4 0 0 0-4 4v3a4 4 0 0 0 4 4z"/></symbol>
+                <symbol id="lc-r" viewBox="0 0 100 100"><path d="M34 38h32l3 37H31z"/><path d="M27 17h10v8h7v-8h12v8h7v-8h10v15l-6 6H33l-6-6z"/><path d="M33 47h34M32 66h36" fill="none" stroke="currentColor"/><path d="M24 86h52a4 4 0 0 0 4-4v-3a4 4 0 0 0-4-4H24a4 4 0 0 0-4 4v3a4 4 0 0 0 4 4z"/></symbol>
+                <symbol id="lc-n" viewBox="0 0 100 100"><path d="M66 75c2-14 6-26 4-39-2-13-11-21-22-22l-3-7-5 8c-7 3-11 10-15 18l-6 12c-1 4 2 7 6 6l7-3c3-1 6-3 9-6 1 7-3 13-8 19-2 4-3 9-3 14z"/><circle cx="43" cy="28" r="2.6" fill="currentColor" stroke="none"/><path d="M58 22c7 9 8 28 3 44" fill="none" stroke="currentColor"/><path d="M24 86h52a4 4 0 0 0 4-4v-3a4 4 0 0 0-4-4H24a4 4 0 0 0-4 4v3a4 4 0 0 0 4 4z"/></symbol>
+                <symbol id="lc-b" viewBox="0 0 100 100"><path d="M41 64c0 5-4 8-8 11h34c-4-3-8-6-8-11z"/><rect x="36" y="57" width="28" height="8" rx="4"/><path d="M50 20c11 8 17 18 15 29-1 6-6 9-15 9s-14-3-15-9c-2-11 4-21 15-29z"/><circle cx="50" cy="14" r="5.5"/><path d="M56 31l-9 13" fill="none" stroke="currentColor"/><path d="M24 86h52a4 4 0 0 0 4-4v-3a4 4 0 0 0-4-4H24a4 4 0 0 0-4 4v3a4 4 0 0 0 4 4z"/></symbol>
+                <symbol id="lc-q" viewBox="0 0 100 100"><path d="M33 65c1 4 0 7-3 10h40c-3-3-4-6-3-10z"/><path d="M30 60L21 30l10 14 5-22 7 18 7-22 7 22 7-18 5 22 10-14-9 30z"/><rect x="29" y="58" width="42" height="8" rx="4"/><circle cx="21" cy="27" r="4.5"/><circle cx="36" cy="19" r="4.5"/><circle cx="50" cy="14" r="4.5"/><circle cx="64" cy="19" r="4.5"/><circle cx="79" cy="27" r="4.5"/><path d="M24 86h52a4 4 0 0 0 4-4v-3a4 4 0 0 0-4-4H24a4 4 0 0 0-4 4v3a4 4 0 0 0 4 4z"/></symbol>
+                <symbol id="lc-k" viewBox="0 0 100 100"><path d="M36 65c0 4-2 7-6 10h40c-4-3-6-6-6-10z"/><path d="M50 30c-12 0-24 3-25 12-1 7 4 12 8 17h34c4-5 9-10 8-17-1-9-13-12-25-12z"/><rect x="31" y="57" width="38" height="8" rx="4"/><path d="M46.5 6h7v6h6v7h-6v11h-7V19h-6v-7h6z"/><path d="M50 33v23" fill="none" stroke="currentColor"/><path d="M24 86h52a4 4 0 0 0 4-4v-3a4 4 0 0 0-4-4H24a4 4 0 0 0-4 4v3a4 4 0 0 0 4 4z"/></symbol>
+            </svg>
+            <div id="board" class="board" role="grid" aria-label="Chess board" aria-busy="true">
+              <div role="row" class="rank">
+                <div role="gridcell" class="sq" data-sq="56" data-side="b" data-rl="8" tabindex="0" aria-label="a8, black rook" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-r"/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="57" data-side="b" tabindex="-1" aria-label="b8, black knight" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-n"/></svg></div>
+                <div role="gridcell" class="sq" data-sq="58" data-side="b" tabindex="-1" aria-label="c8, black bishop" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-b"/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="59" data-side="b" tabindex="-1" aria-label="d8, black queen" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-q"/></svg></div>
+                <div role="gridcell" class="sq" data-sq="60" data-side="b" tabindex="-1" aria-label="e8, black king" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-k"/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="61" data-side="b" tabindex="-1" aria-label="f8, black bishop" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-b"/></svg></div>
+                <div role="gridcell" class="sq" data-sq="62" data-side="b" tabindex="-1" aria-label="g8, black knight" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-n"/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="63" data-side="b" tabindex="-1" aria-label="h8, black rook" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-r"/></svg></div>
+              </div>
+              <div role="row" class="rank">
+                <div role="gridcell" class="sq dark" data-sq="48" data-side="b" data-rl="7" tabindex="-1" aria-label="a7, black pawn" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-p"/></svg></div>
+                <div role="gridcell" class="sq" data-sq="49" data-side="b" tabindex="-1" aria-label="b7, black pawn" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-p"/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="50" data-side="b" tabindex="-1" aria-label="c7, black pawn" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-p"/></svg></div>
+                <div role="gridcell" class="sq" data-sq="51" data-side="b" tabindex="-1" aria-label="d7, black pawn" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-p"/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="52" data-side="b" tabindex="-1" aria-label="e7, black pawn" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-p"/></svg></div>
+                <div role="gridcell" class="sq" data-sq="53" data-side="b" tabindex="-1" aria-label="f7, black pawn" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-p"/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="54" data-side="b" tabindex="-1" aria-label="g7, black pawn" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-p"/></svg></div>
+                <div role="gridcell" class="sq" data-sq="55" data-side="b" tabindex="-1" aria-label="h7, black pawn" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-p"/></svg></div>
+              </div>
+              <div role="row" class="rank">
+                <div role="gridcell" class="sq" data-sq="40" data-side="" data-rl="6" tabindex="-1" aria-label="a6, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="41" data-side="" tabindex="-1" aria-label="b6, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq" data-sq="42" data-side="" tabindex="-1" aria-label="c6, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="43" data-side="" tabindex="-1" aria-label="d6, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq" data-sq="44" data-side="" tabindex="-1" aria-label="e6, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="45" data-side="" tabindex="-1" aria-label="f6, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq" data-sq="46" data-side="" tabindex="-1" aria-label="g6, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="47" data-side="" tabindex="-1" aria-label="h6, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+              </div>
+              <div role="row" class="rank">
+                <div role="gridcell" class="sq dark" data-sq="32" data-side="" data-rl="5" tabindex="-1" aria-label="a5, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq" data-sq="33" data-side="" tabindex="-1" aria-label="b5, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="34" data-side="" tabindex="-1" aria-label="c5, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq" data-sq="35" data-side="" tabindex="-1" aria-label="d5, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="36" data-side="" tabindex="-1" aria-label="e5, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq" data-sq="37" data-side="" tabindex="-1" aria-label="f5, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="38" data-side="" tabindex="-1" aria-label="g5, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq" data-sq="39" data-side="" tabindex="-1" aria-label="h5, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+              </div>
+              <div role="row" class="rank">
+                <div role="gridcell" class="sq" data-sq="24" data-side="" data-rl="4" tabindex="-1" aria-label="a4, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="25" data-side="" tabindex="-1" aria-label="b4, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq" data-sq="26" data-side="" tabindex="-1" aria-label="c4, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="27" data-side="" tabindex="-1" aria-label="d4, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq" data-sq="28" data-side="" tabindex="-1" aria-label="e4, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="29" data-side="" tabindex="-1" aria-label="f4, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq" data-sq="30" data-side="" tabindex="-1" aria-label="g4, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="31" data-side="" tabindex="-1" aria-label="h4, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+              </div>
+              <div role="row" class="rank">
+                <div role="gridcell" class="sq dark" data-sq="16" data-side="" data-rl="3" tabindex="-1" aria-label="a3, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq" data-sq="17" data-side="" tabindex="-1" aria-label="b3, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="18" data-side="" tabindex="-1" aria-label="c3, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq" data-sq="19" data-side="" tabindex="-1" aria-label="d3, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="20" data-side="" tabindex="-1" aria-label="e3, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq" data-sq="21" data-side="" tabindex="-1" aria-label="f3, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="22" data-side="" tabindex="-1" aria-label="g3, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+                <div role="gridcell" class="sq" data-sq="23" data-side="" tabindex="-1" aria-label="h3, empty" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href=""/></svg></div>
+              </div>
+              <div role="row" class="rank">
+                <div role="gridcell" class="sq" data-sq="8" data-side="w" data-rl="2" tabindex="-1" aria-label="a2, white pawn" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-p"/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="9" data-side="w" tabindex="-1" aria-label="b2, white pawn" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-p"/></svg></div>
+                <div role="gridcell" class="sq" data-sq="10" data-side="w" tabindex="-1" aria-label="c2, white pawn" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-p"/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="11" data-side="w" tabindex="-1" aria-label="d2, white pawn" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-p"/></svg></div>
+                <div role="gridcell" class="sq" data-sq="12" data-side="w" tabindex="-1" aria-label="e2, white pawn" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-p"/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="13" data-side="w" tabindex="-1" aria-label="f2, white pawn" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-p"/></svg></div>
+                <div role="gridcell" class="sq" data-sq="14" data-side="w" tabindex="-1" aria-label="g2, white pawn" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-p"/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="15" data-side="w" tabindex="-1" aria-label="h2, white pawn" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-p"/></svg></div>
+              </div>
+              <div role="row" class="rank">
+                <div role="gridcell" class="sq dark" data-sq="0" data-side="w" data-rl="1" data-fl="a" tabindex="-1" aria-label="a1, white rook" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-r"/></svg></div>
+                <div role="gridcell" class="sq" data-sq="1" data-side="w" data-fl="b" tabindex="-1" aria-label="b1, white knight" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-n"/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="2" data-side="w" data-fl="c" tabindex="-1" aria-label="c1, white bishop" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-b"/></svg></div>
+                <div role="gridcell" class="sq" data-sq="3" data-side="w" data-fl="d" tabindex="-1" aria-label="d1, white queen" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-q"/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="4" data-side="w" data-fl="e" tabindex="-1" aria-label="e1, white king" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-k"/></svg></div>
+                <div role="gridcell" class="sq" data-sq="5" data-side="w" data-fl="f" tabindex="-1" aria-label="f1, white bishop" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-b"/></svg></div>
+                <div role="gridcell" class="sq dark" data-sq="6" data-side="w" data-fl="g" tabindex="-1" aria-label="g1, white knight" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-n"/></svg></div>
+                <div role="gridcell" class="sq" data-sq="7" data-side="w" data-fl="h" tabindex="-1" aria-label="h1, white rook" aria-selected="false"><svg class="pc" viewBox="0 0 100 100" aria-hidden="true"><use href="#lc-r"/></svg></div>
+              </div>
+            </div>
             <div class="row controls">
-              <button id="new-white" class="secondary" type="button">New game as White</button>
-              <button id="new-black" class="secondary" type="button">New game as Black</button>
-              <label for="promotion" class="muted">Promote to</label>
-              <select id="promotion">
-                <option value="q">Queen</option>
-                <option value="r">Rook</option>
-                <option value="b">Bishop</option>
-                <option value="n">Knight</option>
-              </select>
+              <button id="new-white" class="secondary" type="button">Play as White</button>
+              <button id="new-black" class="secondary" type="button">Play as Black</button>
+              <button id="undo" class="ghost" type="button" disabled>Take back</button>
+              <label class="promote muted">Promote to
+                <select id="promotion">
+                  <option value="q">Queen</option>
+                  <option value="r">Rook</option>
+                  <option value="b">Bishop</option>
+                  <option value="n">Knight</option>
+                </select>
+              </label>
             </div>
             <details class="disclosure">
               <summary>Moves and the exact requests</summary>
