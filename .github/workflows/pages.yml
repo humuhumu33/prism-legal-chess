@@ -28,6 +28,11 @@ jobs:
     if: github.repository != 'UOR-Foundation/template'
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    # id-token: the build registers the app's address with the Prism registry
+    # (bootstrap/register.mjs), proving its repository with the run's OIDC token.
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Check out the exact event revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
