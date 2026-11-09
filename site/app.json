@@ -15,6 +15,10 @@
     ],
     "refusal": "invalid request"
   },
+  "promise": {
+    "headline": "Never plays or accepts an illegal move.",
+    "detail": "Every move, yours and the app's, is checked against the rules of movement and king safety before it is played."
+  },
   "claim": "LC-01 and LC-02: the app plays a reply, and accepts a move of yours, only when the legality gate returns Legal for that exact move. LC-03: the legal moves the gate checks against reproduce the published perft counts of five reference positions to depth three.",
   "proposition": {
     "name": "playsOnlyLegal",
